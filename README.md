@@ -1,5 +1,7 @@
 # Cofacts Media Manager
 
+[![CI](https://github.com/cofacts/media-manager/actions/workflows/main.yml/badge.svg)](https://github.com/cofacts/media-manager/actions/workflows/main.yml)
+
 Design: https://g0v.hackmd.io/@mrorz/cofacts-media-manager
 
 ## Development
