@@ -3,16 +3,16 @@ import http from 'http';
 import handler from 'serve-handler';
 import { Storage } from '@google-cloud/storage';
 
-// import MediaManager from '../src/MediaManager';
+import MediaManager from '../src/MediaManager';
 
 require('dotenv').config();
 
 if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
-  // const mediaManager = new MediaManager({
-  //   credentialsJSON: process.env.CREDENTIALS_JSON,
-  //   bucketName: process.env.BUCKET_NAME,
-  //   prefix: process.env.PREFIX,
-  // });
+  const mediaManager = new MediaManager({
+    credentialsJSON: process.env.CREDENTIALS_JSON,
+    bucketName: process.env.BUCKET_NAME,
+    prefix: process.env.PREFIX,
+  });
 
   // File server serving test input file in ./fixtures
   //
@@ -63,7 +63,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   });
 
   it('can upload and query txt file', async () => {
-    // mediaManager.query({});
-    expect(true).toBe(true);
+    const info = await mediaManager.insert({ url: `${serverUrl}/1mb.txt` });
+    expect(info).toMatchInlineSnapshot();
   });
 }
