@@ -5,7 +5,12 @@ import { SearchResult, FileInfo, MediaType } from './types';
 
 class MediaManager {
   constructor(params: {
-    /** Google cloud credentail JSON content of a service account. */
+    /** Google cloud credentail JSON content of a service account.
+     * Must include keys:
+     * - project_id
+     * - private_key
+     * - client_email
+     */
     credentialsJSON: string;
 
     /**
@@ -22,9 +27,8 @@ class MediaManager {
      */
     prefix?: string;
   }) {
-    const storage = new Storage({
-      credentials: JSON.parse(params.credentialsJSON || '{}'),
-    });
+    const { project_id: projectId, credentials } = JSON.parse(params.credentialsJSON || '{}');
+    const storage = new Storage({ projectId, credentials });
     this.bucket = storage.bucket(params.bucketName || 'default');
     this.prefix = params.prefix ?? '';
   }
