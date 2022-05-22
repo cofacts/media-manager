@@ -62,7 +62,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     console.info(`[Integration] file server closed.`);
   });
 
-  it('can upload and download file', async () => {
+  it('can upload and query txt file', async () => {
     // mediaManager.query({});
     expect(true).toBe(true);
   });

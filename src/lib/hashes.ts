@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
  * @param fullBodyStream Stream for file body
  */
 export function getFileIDHash(fullBodyStream: NodeJS.ReadableStream): Promise<string> {
-  const hash = createHash('sha256').setEncoding('base64');
+  const hash = createHash('sha256').setEncoding('base64url');
   const stream = fullBodyStream.pipe(hash);
 
   return new Promise((resolve, reject) => {
