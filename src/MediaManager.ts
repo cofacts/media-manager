@@ -31,7 +31,7 @@ class MediaManager {
      */
     prefix?: string;
   }) {
-    const { project_id: projectId, credentials } = JSON.parse(params.credentialsJSON || '{}');
+    const { project_id: projectId, ...credentials } = JSON.parse(params.credentialsJSON || '{}');
     const storage = new Storage({ projectId, credentials });
     this.bucket = storage.bucket(params.bucketName || 'default');
     this.prefix = params.prefix ?? '';
