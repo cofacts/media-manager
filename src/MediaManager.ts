@@ -105,7 +105,11 @@ class MediaManager {
 
   async insert({ url, onUploadStop }: InsertOptions): Promise<FileInfo> {
     const { body, type, contentType, clone } = await prepareStream({ url });
-    const file = this.bucket.file('temp');
+
+    const tempFileName = `${Date.now()}_${Math.floor(Math.random() * 9999.9)
+      .toString()
+      .padStart(4, '0')}`;
+    const file = this.bucket.file(`${this.prefix}${tempFileName}`);
 
     pipeline(clone(), file.createWriteStream({ contentType }))
       .then(() => {
