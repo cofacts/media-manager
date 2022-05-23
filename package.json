@@ -15,7 +15,7 @@
     "build": "tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "prepublishOnly": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
@@ -56,6 +56,6 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^5.19.4",
-    "node-fetch": "^3.2.4"
+    "node-fetch": "^2.6.7"
   }
 }
