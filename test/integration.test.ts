@@ -1,6 +1,8 @@
 import path from 'path';
 import http from 'http';
 import handler from 'serve-handler';
+import fetch from 'node-fetch';
+import fs from 'fs/promises';
 import { Storage } from '@google-cloud/storage';
 
 import MediaManager from '../src/MediaManager';
@@ -63,13 +65,30 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   });
 
   it('can upload and query txt file', async () => {
-    const info = await mediaManager.insert({ url: `${serverUrl}/1mb.txt` });
-    expect(info).toMatchInlineSnapshot(`
-      Object {
-        "id": "file.neb00TLkNNcE4r1Dyeq7A6YXDlWZy4g0pxJ8f7gFkSk",
-        "type": "file",
-        "url": "https://storage.googleapis.com/cofacts-media-manager-integration/localhost-mrorz%2Ffile%2Fneb00TLkNNcE4r1Dyeq7A6YXDlWZy4g0pxJ8f7gFkSk",
-      }
-    `);
+    let uploadedUrl = '';
+
+    // Resolves when onUploadStop is invoked
+    const uploadError = await new Promise(async resolve => {
+      const { url, ...info } = await mediaManager.insert({
+        url: `${serverUrl}/1mb.txt`,
+        onUploadStop: resolve,
+      });
+
+      uploadedUrl = url;
+
+      expect(info).toMatchInlineSnapshot(`
+        Object {
+          "id": "file.neb00TLkNNcE4r1Dyeq7A6YXDlWZy4g0pxJ8f7gFkSk",
+          "type": "file",
+        }
+      `);
+    });
+
+    expect(uploadError).toBe(null);
+
+    // Check if user can get identical file from returned URL
+    const uploadedFile = await (await fetch(uploadedUrl)).text();
+    const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '1mb.txt'), 'utf8');
+    expect(uploadedFile).toEqual(originalFile);
   });
 }

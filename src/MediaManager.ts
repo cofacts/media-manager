@@ -114,16 +114,12 @@ class MediaManager {
 
     const tempFile = this.bucket.file(`${this.prefix}temp/${tempFileName}`);
 
+    // No need to await, just keep uploading.
     const uploadPromise = pipeline(clone(), tempFile.createWriteStream({ contentType }));
 
-    // No need to await, just keep uploading.
-    uploadPromise
-      .then(() => {
-        if (onUploadStop) onUploadStop(null);
-      })
-      .catch(error => {
-        if (onUploadStop) onUploadStop(error);
-      });
+    uploadPromise.catch(error => {
+      if (onUploadStop) onUploadStop(error);
+    });
 
     const idHash = await getFileIDHash(getBody());
     const destFile = this.bucket.file(this.genFileName(type, [idHash]));
@@ -136,10 +132,13 @@ class MediaManager {
       tempFile.delete(); // No need to await.
     } else {
       // Move file to destination after fully uploaded.
-      uploadPromise.then(
-        // No need to await.
-        () => tempFile.move(destFile)
-      );
+      // No need to await.
+      uploadPromise
+        .then(() => tempFile.move(destFile))
+        .then(() => {
+          // After move completes, call onUploadStop with no errors
+          if (onUploadStop) onUploadStop(null);
+        });
     }
 
     return {

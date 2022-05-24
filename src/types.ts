@@ -54,6 +54,8 @@ export type InsertOptions = {
 
   /**
    * When upload succeeded, onUploadStop(null) will be called.
+   * By this time, returned {@link FileInfo.url} should be usable.
+   *
    * If upload fails, onUploadStop(err) will be called, passing the err returned by GCS NodeJS API.
    */
   onUploadStop?: (err: Error | null) => void;
