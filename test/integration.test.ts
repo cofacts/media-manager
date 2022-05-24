@@ -64,6 +64,12 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
   it('can upload and query txt file', async () => {
     const info = await mediaManager.insert({ url: `${serverUrl}/1mb.txt` });
-    expect(info).toMatchInlineSnapshot();
+    expect(info).toMatchInlineSnapshot(`
+      Object {
+        "id": "file.neb00TLkNNcE4r1Dyeq7A6YXDlWZy4g0pxJ8f7gFkSk",
+        "type": "file",
+        "url": "https://storage.googleapis.com/cofacts-media-manager-integration/localhost-mrorz%2Ffile%2Fneb00TLkNNcE4r1Dyeq7A6YXDlWZy4g0pxJ8f7gFkSk",
+      }
+    `);
   });
 }

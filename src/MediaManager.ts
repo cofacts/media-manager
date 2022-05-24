@@ -47,7 +47,7 @@ class MediaManager {
    * @returns File name on GCS
    */
   private genFileName(type: MediaType, hashes: ReadonlyArray<string>): string {
-    return `${this.prefix}/${type}/${hashes.join('/')}`;
+    return `${this.prefix}${type}/${hashes.join('/')}`;
   }
 
   /**
@@ -109,9 +109,10 @@ class MediaManager {
     const tempFileName = `${Date.now()}_${Math.floor(Math.random() * 9999.9)
       .toString()
       .padStart(4, '0')}`;
-    const file = this.bucket.file(`${this.prefix}${tempFileName}`);
 
-    pipeline(clone(), file.createWriteStream({ contentType }))
+    const file = this.bucket.file(`${this.prefix}temp/${tempFileName}`);
+
+    const uploadPromise = pipeline(clone(), file.createWriteStream({ contentType }))
       .then(() => {
         if (onUploadStop) onUploadStop(null);
       })
@@ -119,12 +120,23 @@ class MediaManager {
         if (onUploadStop) onUploadStop(error);
       });
 
-    const idHash = await getFileIDHash(getBody());
-    await file.rename(this.genFileName(type, [idHash]));
+    // FIXME:
+    // We use Promise.all to ensure file.rename works on a existing file.
+    // The downside is that this promise will not resolve until full upload complete.
+    // We should find a way to rename a uploading file and resolves even earlier.
+    //
+    const [idHash] = await Promise.all([getFileIDHash(getBody()), uploadPromise]);
+    const newFileName = this.genFileName(type, [idHash]);
+
+    file.rename(newFileName); // No need to wait for rename.
+
     return {
       id: this.genId(type, [idHash]),
-      url: file.publicUrl(),
       type,
+
+      // `file` may contain outdated name for now,
+      // thus create a new file object to generate publicUrl
+      url: this.bucket.file(newFileName).publicUrl(),
     };
   }
 
