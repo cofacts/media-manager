@@ -106,13 +106,18 @@ class MediaManager {
   async insert({ url, onUploadStop }: InsertOptions): Promise<FileInfo> {
     const { getBody, type, contentType, clone } = await prepareStream({ url });
 
+    // Temporary file name used when uploading the data before idHash is calculated
+    //
     const tempFileName = `${Date.now()}_${Math.floor(Math.random() * 9999.9)
       .toString()
       .padStart(4, '0')}`;
 
-    const file = this.bucket.file(`${this.prefix}temp/${tempFileName}`);
+    const tempFile = this.bucket.file(`${this.prefix}temp/${tempFileName}`);
 
-    const uploadPromise = pipeline(clone(), file.createWriteStream({ contentType }))
+    const uploadPromise = pipeline(clone(), tempFile.createWriteStream({ contentType }));
+
+    // No need to await, just keep uploading.
+    uploadPromise
       .then(() => {
         if (onUploadStop) onUploadStop(null);
       })
@@ -120,23 +125,27 @@ class MediaManager {
         if (onUploadStop) onUploadStop(error);
       });
 
-    // FIXME:
-    // We use Promise.all to ensure file.rename works on a existing file.
-    // The downside is that this promise will not resolve until full upload complete.
-    // We should find a way to rename a uploading file and resolves even earlier.
-    //
-    const [idHash] = await Promise.all([getFileIDHash(getBody()), uploadPromise]);
-    const newFileName = this.genFileName(type, [idHash]);
+    const idHash = await getFileIDHash(getBody());
+    const destFile = this.bucket.file(this.genFileName(type, [idHash]));
 
-    file.rename(newFileName); // No need to wait for rename.
+    // Rename temp file after id hash is generated.
+    //
+    const [isDestFileExists] = await destFile.exists();
+    if (isDestFileExists) {
+      // Destination already exist, delete temp file immediately.
+      tempFile.delete(); // No need to await.
+    } else {
+      // Move file to destination after fully uploaded.
+      uploadPromise.then(
+        // No need to await.
+        () => tempFile.move(destFile)
+      );
+    }
 
     return {
       id: this.genId(type, [idHash]),
       type,
-
-      // `file` may contain outdated name for now,
-      // thus create a new file object to generate publicUrl
-      url: this.bucket.file(newFileName).publicUrl(),
+      url: destFile.publicUrl(),
     };
   }
 
