@@ -12,8 +12,13 @@ type PrepareStreamResult = {
   /** Original content type from url */
   contentType: string;
 
-  /** Body stream */
-  body: NodeJS.ReadableStream;
+  /**
+   * Returns latest body from response.
+   * `clone()` may change original resp.body, so we must use accessor to ensure latest body
+   * is fetched.
+   * @see {@link https://github.com/node-fetch/node-fetch/blob/2.x/src/body.js#L409-L410}
+   */
+  getBody: () => NodeJS.ReadableStream;
 
   /**
    * Create and returns a cloned body stream.
@@ -26,8 +31,6 @@ type PrepareStreamResult = {
 
 async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStreamResult> {
   const resp = await fetch(url);
-
-  if (!resp.body) throw new Error(`No body is returned from ${url}`);
 
   const contentType = resp.headers.get('content-type') || '';
   const contentTypeBeforeSlash = contentType.split('/')[0].toLowerCase();
@@ -49,7 +52,10 @@ async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStream
   return {
     type,
     contentType,
-    body: resp.body,
+    getBody: () => {
+      if (!resp.body) throw new Error(`No body is returned from ${url}`);
+      return resp.body;
+    },
     clone: () => {
       const body = resp.clone().body;
       if (!body) throw new Error('Response stream clone failed');

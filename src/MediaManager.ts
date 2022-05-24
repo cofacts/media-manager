@@ -81,9 +81,9 @@ class MediaManager {
   }
 
   async query({ url }: QueryOptions): Promise<SearchResult> {
-    const { body, type } = await prepareStream({ url });
+    const { getBody, type } = await prepareStream({ url });
     // if (type !== MediaType.image) {
-    const idHash = await getFileIDHash(body);
+    const idHash = await getFileIDHash(getBody());
     const id = [type, idHash].join('/');
 
     const [files] = await this.bucket.getFiles({ prefix: [this.prefix, id].join('/') });
@@ -104,7 +104,7 @@ class MediaManager {
   }
 
   async insert({ url, onUploadStop }: InsertOptions): Promise<FileInfo> {
-    const { body, type, contentType, clone } = await prepareStream({ url });
+    const { getBody, type, contentType, clone } = await prepareStream({ url });
 
     const tempFileName = `${Date.now()}_${Math.floor(Math.random() * 9999.9)
       .toString()
@@ -119,7 +119,7 @@ class MediaManager {
         if (onUploadStop) onUploadStop(error);
       });
 
-    const idHash = await getFileIDHash(body);
+    const idHash = await getFileIDHash(getBody());
     await file.rename(this.genFileName(type, [idHash]));
     return {
       id: this.genId(type, [idHash]),
