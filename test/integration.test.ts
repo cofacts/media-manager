@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import { Storage } from '@google-cloud/storage';
 
 import MediaManager from '../src/MediaManager';
+import { FileInfo, MediaType } from '../src/types';
 
 require('dotenv').config();
 
@@ -65,30 +66,46 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   });
 
   it('can upload and query txt file', async () => {
-    let uploadedUrl = '';
+    let uploadInfo: FileInfo = { id: '', url: '', type: MediaType.file };
 
-    // Resolves when onUploadStop is invoked
+    // First upload.
+    // Resolves on upload complete.
+    //
     const uploadError = await new Promise(async resolve => {
-      const { url, ...info } = await mediaManager.insert({
+      uploadInfo = await mediaManager.insert({
         url: `${serverUrl}/100k.txt`,
         onUploadStop: resolve,
       });
 
-      uploadedUrl = url;
-
-      expect(info).toMatchInlineSnapshot(`
-        Object {
-          "id": "file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU",
-          "type": "file",
-        }
-      `);
+      expect(uploadInfo.id).toMatchInlineSnapshot(
+        `"file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU"`
+      );
+      expect(uploadInfo.type).toBe('file');
     });
 
     expect(uploadError).toBe(null);
 
     // Check if user can get identical file from returned URL
-    const uploadedFile = await (await fetch(uploadedUrl)).text();
+    //
+    const uploadedFile = await (await fetch(uploadInfo.url)).text();
     const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '100k.txt'), 'utf8');
     expect(uploadedFile).toEqual(originalFile);
+
+    // Test uploading duplicate file
+    //
+    const reuploadError = await new Promise(async resolve => {
+      const info = await mediaManager.insert({
+        url: `${serverUrl}/100k.txt`,
+        onUploadStop: resolve,
+      });
+
+      // Expect returned info are totally identical to the first upload
+      expect(info).toStrictEqual(uploadInfo);
+    });
+
+    // Expect file already exists error
+    expect(reuploadError).toMatchInlineSnapshot(
+      `[Error: File with type=file and idHash="Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU" already exists]`
+    );
   }, 30000);
 }

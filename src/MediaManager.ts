@@ -128,8 +128,13 @@ class MediaManager {
     //
     const [isDestFileExists] = await destFile.exists();
     if (isDestFileExists) {
-      // Destination already exist, delete temp file immediately.
-      tempFile.delete(); // No need to await.
+      if (onUploadStop)
+        // Invoke onUploadStop early (even though the actual upload may still in progress)
+        onUploadStop(new Error(`File with type=${type} and idHash="${idHash}" already exists`));
+
+      // tempFile can be safely accessed only after uploadPromise resolves.
+      // No need to await.
+      uploadPromise.then(() => tempFile.delete());
     } else {
       // Move file to destination after fully uploaded.
       // No need to await.
