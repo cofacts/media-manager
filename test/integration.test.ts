@@ -70,7 +70,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     // Resolves when onUploadStop is invoked
     const uploadError = await new Promise(async resolve => {
       const { url, ...info } = await mediaManager.insert({
-        url: `${serverUrl}/1mb.txt`,
+        url: `${serverUrl}/100k.txt`,
         onUploadStop: resolve,
       });
 
@@ -78,7 +78,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
       expect(info).toMatchInlineSnapshot(`
         Object {
-          "id": "file.neb00TLkNNcE4r1Dyeq7A6YXDlWZy4g0pxJ8f7gFkSk",
+          "id": "file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU",
           "type": "file",
         }
       `);
@@ -88,7 +88,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     // Check if user can get identical file from returned URL
     const uploadedFile = await (await fetch(uploadedUrl)).text();
-    const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '1mb.txt'), 'utf8');
+    const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '100k.txt'), 'utf8');
     expect(uploadedFile).toEqual(originalFile);
   }, 30000);
 }
