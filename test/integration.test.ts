@@ -56,7 +56,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     });
 
     console.info(`[Integration] file server listening at ${serverUrl}`);
-  }, 30000);
+  }, 10000);
 
   afterAll(async () => {
     // File server teardown
@@ -90,5 +90,5 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     const uploadedFile = await (await fetch(uploadedUrl)).text();
     const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '1mb.txt'), 'utf8');
     expect(uploadedFile).toEqual(originalFile);
-  });
+  }, 30000);
 }
