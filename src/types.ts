@@ -35,6 +35,30 @@ export interface FileInfo {
 /** ID is the to-be ID if the file is being inserted into database. */
 export type QueryInfo = Pick<FileInfo, 'id' | 'type'>;
 
+export type MediaManagerOptions = {
+  /** Google cloud credentail JSON content of a service account.
+   * Must include keys:
+   * - project_id
+   * - private_key
+   * - client_email
+   */
+  credentialsJSON: string;
+
+  /**
+   * Existing GCS bucket. The service account of `credentialsJSON` needs to
+   * have the following permission of this bucket:
+   * - roles/storage.objectCreator
+   * - roles/storage.objectViewer
+   */
+  bucketName: string;
+
+  /**
+   * The prefix to write media files.
+   * File structure after this prefix is managed by MediaManager
+   */
+  prefix?: string;
+};
+
 export type QueryOptions = {
   /**
    * The URL to the file to search for.

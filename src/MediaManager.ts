@@ -2,35 +2,20 @@ import { Bucket, Storage } from '@google-cloud/storage';
 import { pipeline } from 'stream/promises';
 import prepareStream from './lib/prepareStream';
 import { getFileIDHash } from './lib/hashes';
-import { SearchResult, FileInfo, MediaType, QueryOptions, InsertOptions } from './types';
+import {
+  SearchResult,
+  FileInfo,
+  MediaType,
+  QueryOptions,
+  InsertOptions,
+  MediaManagerOptions,
+} from './types';
 
 // URL-safe delimiter for file ID components
 const ID_DELIMITER = '.';
 
 class MediaManager {
-  constructor(params: {
-    /** Google cloud credentail JSON content of a service account.
-     * Must include keys:
-     * - project_id
-     * - private_key
-     * - client_email
-     */
-    credentialsJSON: string;
-
-    /**
-     * Existing GCS bucket. The service account of `credentialsJSON` needs to
-     * have the following permission of this bucket:
-     * - roles/storage.objectCreator
-     * - roles/storage.objectViewer
-     */
-    bucketName: string;
-
-    /**
-     * The prefix to write media files.
-     * File structure after this prefix is managed by MediaManager
-     */
-    prefix?: string;
-  }) {
+  constructor(params: MediaManagerOptions) {
     const { project_id: projectId, ...credentials } = JSON.parse(params.credentialsJSON || '{}');
     const storage = new Storage({ projectId, credentials });
     this.bucket = storage.bucket(params.bucketName || 'default');
