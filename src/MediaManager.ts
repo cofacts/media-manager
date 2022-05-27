@@ -5,10 +5,11 @@ import { getFileIDHash } from './lib/hashes';
 import {
   SearchResult,
   FileInfo,
-  MediaType,
+  isMediaType,
   QueryOptions,
   InsertOptions,
   MediaManagerOptions,
+  FileIdentifier,
 } from './types';
 
 // URL-safe delimiter for file ID components
@@ -31,54 +32,53 @@ class MediaManager {
    * @param hashes - Levels of multi-layer hash (for images, there are 2 layers; for others there is 1).
    * @returns File name on GCS
    */
-  private genFileName(type: MediaType, hashes: ReadonlyArray<string>): string {
+  private genFileName({ type, hashes }: FileIdentifier): string {
     return `${this.prefix}${type}/${hashes.join('/')}`;
   }
 
   /**
-   * @param type - MediaType of the file
-   * @param hashes - Levels of multi-layer hash (for images, there are 2 layers; for others there is 1).
+   * @param name - File name on GCS
+   * @returns
+   */
+  private parseFilename(name: string): FileIdentifier {
+    if (this.prefix) name = name.slice(this.prefix.length);
+    const [type, ...hashes] = name.split('/');
+
+    if (isMediaType(type)) return { type, hashes };
+    throw new Error(`Incorrect file name: ${name}`);
+  }
+
+  /**
    * @returns `id` in {@link FileInfo.id FileInfo}
    */
-  private genId(type: MediaType, hashes: ReadonlyArray<string>) {
+  private genId({ type, hashes }: FileIdentifier) {
     return [type, ...hashes].join(ID_DELIMITER);
   }
 
   /**
    * @param id - `id` in {@link FileInfo.id FileInfo}
-   * @returns File name on GCS
    */
-  private parseId(id: string): { type: MediaType; hashes: string[] } {
+  private parseId(id: string): FileIdentifier {
     const [type, ...hashes] = id.split(ID_DELIMITER);
-    switch (type) {
-      case MediaType.image:
-      case MediaType.audio:
-      case MediaType.video:
-      case MediaType.file:
-        if (hashes.length > 0) {
-          return { type, hashes };
-        }
 
-      // falls through
-      default:
-        throw new Error(`Incorrect ID: ${id}`);
-    }
+    if (isMediaType(type) && hashes.length > 0) return { type, hashes };
+    throw new Error(`Incorrect ID: ${id}`);
   }
 
   async query({ url }: QueryOptions): Promise<SearchResult> {
     const { getBody, type } = await prepareStream({ url });
     // if (type !== MediaType.image) {
     const idHash = await getFileIDHash(getBody());
-    const id = [type, idHash].join('/');
+    const prefix = this.genFileName({ type, hashes: [idHash] });
 
-    const [files] = await this.bucket.getFiles({ prefix: [this.prefix, id].join('/') });
+    const [files] = await this.bucket.getFiles({ prefix });
 
     return {
-      queryInfo: { id, type },
+      queryInfo: { id: this.genId({ type, hashes: [idHash] }), type },
       hits: files.map(file => ({
         similarity: 1,
         info: {
-          id: this.prefix ? file.name.slice(this.prefix.length + 1) : file.name,
+          id: this.genId(this.parseFilename(file.name)),
           url: file.publicUrl(),
           type,
           // createdAt: file
@@ -107,7 +107,7 @@ class MediaManager {
     });
 
     const idHash = await getFileIDHash(getBody());
-    const destFile = this.bucket.file(this.genFileName(type, [idHash]));
+    const destFile = this.bucket.file(this.genFileName({ type, hashes: [idHash] }));
 
     // Rename temp file after id hash is generated.
     //
@@ -132,19 +132,22 @@ class MediaManager {
     }
 
     return {
-      id: this.genId(type, [idHash]),
+      id: this.genId({ type, hashes: [idHash] }),
       type,
       url: destFile.publicUrl(),
     };
   }
 
   // Get file by ID from GCS
-  // getContent(id: string): ReadableStream {}
+  getContent(id: string): NodeJS.ReadableStream {
+    const file = this.bucket.file(this.genFileName(this.parseId(id)));
+    return file.createReadStream();
+  }
 
   // Get file info by ID from GCS. Null if specified ID does not exist.
   async getInfo(id: string): Promise<FileInfo | null> {
     const { type, hashes } = this.parseId(id);
-    const file = this.bucket.file(this.genFileName(type, hashes));
+    const file = this.bucket.file(this.genFileName({ type, hashes }));
 
     const [isFileExists] = await file.exists();
 

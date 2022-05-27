@@ -66,6 +66,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   });
 
   it('can upload and query txt file', async () => {
+    const testFileUrl = `${serverUrl}/100k.txt`;
     let uploadInfo: FileInfo = { id: '', url: '', type: MediaType.file };
 
     // First upload.
@@ -73,7 +74,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     //
     const uploadError = await new Promise(async resolve => {
       uploadInfo = await mediaManager.insert({
-        url: `${serverUrl}/100k.txt`,
+        url: testFileUrl,
         onUploadStop: resolve,
       });
 
@@ -85,17 +86,41 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     expect(uploadError).toBe(null);
 
+    const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '100k.txt'), 'utf8');
+
     // Check if user can get identical file from returned URL
     //
-    const uploadedFile = await (await fetch(uploadInfo.url)).text();
-    const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '100k.txt'), 'utf8');
-    expect(uploadedFile).toEqual(originalFile);
+    const fileViaUrl = await (await fetch(uploadInfo.url)).text();
+    expect(fileViaUrl).toEqual(originalFile);
+
+    // Check getContent
+    //
+    const fileViaGetContent = await new Promise(resolve => {
+      let result = '';
+      mediaManager
+        .getContent(uploadInfo.id)
+        .on('data', chunk => (result += chunk))
+        .on('close', () => resolve(result));
+    });
+    expect(fileViaGetContent).toEqual(originalFile);
+
+    // Check if getInfo is identical to uploadInfo
+    //
+    const infoViaGetInfo = await mediaManager.getInfo(uploadInfo.id);
+    expect(infoViaGetInfo).toEqual(uploadInfo);
+
+    // Check if query result returns the uploaded file
+    const queryResult = await mediaManager.query({ url: testFileUrl });
+    expect(queryResult).toHaveProperty(['queryInfo', 'id'], uploadInfo.id);
+    expect(queryResult.hits).toHaveLength(1);
+    expect(queryResult).toHaveProperty(['hits', 0, 'similarity'], 1);
+    expect(queryResult).toHaveProperty(['hits', 0, 'info', 'id'], uploadInfo.id);
 
     // Test uploading duplicate file
     //
     const reuploadError = await new Promise(async resolve => {
       const info = await mediaManager.insert({
-        url: `${serverUrl}/100k.txt`,
+        url: testFileUrl,
         onUploadStop: resolve,
       });
 

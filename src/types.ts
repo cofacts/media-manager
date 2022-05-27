@@ -18,6 +18,18 @@ export enum MediaType {
   file = 'file',
 }
 
+export function isMediaType(type: string): type is MediaType {
+  switch (type) {
+    case MediaType.image:
+    case MediaType.audio:
+    case MediaType.video:
+    case MediaType.file:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export interface FileInfo {
   /**
    * The unique ID for the file.
@@ -84,4 +96,17 @@ export type InsertOptions = {
    * If the file already exist, onUploadStop(err) will also be called with an error.
    */
   onUploadStop?: (err: Error | null) => void;
+};
+
+/**
+ * Information needed to uniquely identify a file
+ */
+export type FileIdentifier = {
+  /** MediaType of the file */
+  type: MediaType;
+
+  /** Levels of multi-layer hash.
+   *  For images, there are 2 layers; for others there is 1
+   */
+  hashes: ReadonlyArray<string>;
 };
