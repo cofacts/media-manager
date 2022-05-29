@@ -12,6 +12,9 @@ type PrepareStreamResult = {
   /** Original content type from url */
   contentType: string;
 
+  /** File size in byte, read from Content-Length */
+  size: number;
+
   /**
    * Returns latest body from response.
    * `clone()` may change original resp.body, so we must use accessor to ensure latest body
@@ -37,6 +40,9 @@ async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStream
 
   if (!contentTypeBeforeSlash) throw new Error(`No content type header provided by ${url}`);
 
+  const size = +(resp.headers.get('content-length') ?? 0);
+  if (size === 0) throw new Error(`No content-length provided by ${url}, or content-length is 0`);
+
   let type: MediaType;
   switch (contentTypeBeforeSlash) {
     case 'image':
@@ -51,6 +57,7 @@ async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStream
   return {
     type,
     contentType,
+    size,
     getBody: () => {
       if (!resp.body) throw new Error(`No body is returned from ${url}`);
       return resp.body;

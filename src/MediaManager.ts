@@ -1,7 +1,7 @@
 import { Bucket, Storage } from '@google-cloud/storage';
 import { pipeline } from 'stream/promises';
 import prepareStream from './lib/prepareStream';
-import { getFileIDHash } from './lib/hashes';
+import { getFileIDHash, getImageSearchHashes, base64urlHammingDist } from './lib/hashes';
 import {
   SearchResult,
   FileInfo,
@@ -10,6 +10,7 @@ import {
   InsertOptions,
   MediaManagerOptions,
   FileIdentifier,
+  MediaType,
 } from './types';
 
 // URL-safe delimiter for file ID components
@@ -66,30 +67,44 @@ class MediaManager {
   }
 
   async query({ url }: QueryOptions): Promise<SearchResult> {
-    const { getBody, type } = await prepareStream({ url });
-    // if (type !== MediaType.image) {
-    const idHash = await getFileIDHash(getBody());
-    const prefix = this.genFileName({ type, hashes: [idHash] });
+    const { getBody, type, size } = await prepareStream({ url });
+
+    const hashes =
+      type === MediaType.image
+        ? await getImageSearchHashes(getBody(), size)
+        : [await getFileIDHash(getBody())];
+
+    // Only use first hash as search hash, no matter it's image or file
+    const prefix = this.genFileName({ type, hashes: [hashes[0]] });
 
     const [files] = await this.bucket.getFiles({ prefix });
 
     return {
-      queryInfo: { id: this.genId({ type, hashes: [idHash] }), type },
-      hits: files.map(file => ({
-        similarity: 1,
-        info: {
-          id: this.genId(this.parseFilename(file.name)),
-          url: file.publicUrl(),
-          type,
-          // createdAt: file
-        },
-      })),
+      queryInfo: { id: this.genId({ type, hashes }), type },
+      hits: files
+        .map(file => {
+          const info = {
+            id: this.genId(this.parseFilename(file.name)),
+            url: file.publicUrl(),
+            type,
+          };
+
+          if (type !== MediaType.image) return { similarity: 1, info };
+
+          // Image: calculate similarity between id hash of query and id hash of found file
+          const {
+            hashes: [, foundIdHash],
+          } = this.parseFilename(file.name);
+          const similarity = 1 - base64urlHammingDist(foundIdHash, hashes[1]) / 32;
+
+          return { similarity, info };
+        })
+        .sort((a, b) => b?.similarity - a.similarity),
     };
-    // }
   }
 
   async insert({ url, onUploadStop }: InsertOptions): Promise<FileInfo> {
-    const { getBody, type, contentType, clone } = await prepareStream({ url });
+    const { getBody, type, contentType, clone, size } = await prepareStream({ url });
 
     // Temporary file name used when uploading the data before idHash is calculated
     //
@@ -106,8 +121,12 @@ class MediaManager {
       if (onUploadStop) onUploadStop(error);
     });
 
-    const idHash = await getFileIDHash(getBody());
-    const destFile = this.bucket.file(this.genFileName({ type, hashes: [idHash] }));
+    const hashes =
+      type === MediaType.image
+        ? await getImageSearchHashes(getBody(), size)
+        : [await getFileIDHash(getBody())];
+
+    const destFile = this.bucket.file(this.genFileName({ type, hashes }));
 
     // Rename temp file after id hash is generated.
     //
@@ -115,7 +134,7 @@ class MediaManager {
     if (isDestFileExists) {
       if (onUploadStop)
         // Invoke onUploadStop early (even though the actual upload may still in progress)
-        onUploadStop(new Error(`File with type=${type} and idHash="${idHash}" already exists`));
+        onUploadStop(new Error(`File "${type} and idHash="${hashes.at(-1)}" already exists`));
 
       // tempFile can be safely accessed only after uploadPromise resolves.
       // No need to await.
@@ -132,7 +151,7 @@ class MediaManager {
     }
 
     return {
-      id: this.genId({ type, hashes: [idHash] }),
+      id: this.genId({ type, hashes }),
       type,
       url: destFile.publicUrl(),
     };

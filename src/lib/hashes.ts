@@ -1,9 +1,11 @@
 import { createHash } from 'crypto';
+import sharp from 'sharp';
+import { imageHash } from 'image-hash';
 
 /**
  * Consumes stream and calculate Non-image File ID hash.
  *
- * @param fullBodyStream Stream for file body
+ * @param fullBodyStream - Stream for file body
  */
 export function getFileIDHash(fullBodyStream: NodeJS.ReadableStream): Promise<string> {
   const hash = createHash('sha256').setEncoding('base64url');
@@ -17,11 +19,70 @@ export function getFileIDHash(fullBodyStream: NodeJS.ReadableStream): Promise<st
   });
 }
 
+const IMAGE_RESIZE_THRESHOLD = 1024 * 1024; // 1MB
+const RESIZED_IMAGE_DIMENSION = 1024; // Max image size = square(RESIZED_IMAGE_DIMENSION)
+
 /**
  * Consumes image stream and calculate its ID hash
  *
- * @param resizedStream Stream for image body, which should be small enough to fit into memory
+ * @param fullBodyStream - Stream for file body
+ * @param fileSize - number of bytes of the content
  */
-export function getImageSearchHash(): Promise<string> {
-  return new Promise(resolve => resolve(''));
+export async function getImageSearchHashes(
+  fullBodyStream: NodeJS.ReadableStream,
+  fileSize: number
+): Promise<ReadonlyArray<string>> {
+  // Buffer for the image; if image too large, it is compressed
+  const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+    const stream =
+      fileSize <= IMAGE_RESIZE_THRESHOLD
+        ? fullBodyStream
+        : fullBodyStream.pipe(
+            sharp().resize({
+              width: RESIZED_IMAGE_DIMENSION,
+              height: RESIZED_IMAGE_DIMENSION,
+              fit: 'inside',
+            })
+          );
+
+    const chunks: Buffer[] = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+
+  return Promise.all([imageHashAsync(imageBuffer, 6), imageHashAsync(imageBuffer, 64)]);
+}
+
+function imageHashAsync(buffer: Buffer, bits: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    imageHash({ data: buffer }, bits, true, (error: Error | null, data: string): void => {
+      if (error) {
+        console.error(error);
+        reject(error);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+}
+
+/**
+ * Number of bit 1 in a byte
+ */
+const numOf1inByte = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
+
+/**
+ * Return the hamming distance between the two base64url encoded hash
+ */
+export function base64urlHammingDist(hashA: string, hashB: string): number {
+  const bufferA = Buffer.from(hashA, 'base64url');
+  const bufferB = Buffer.from(hashB, 'base64url');
+
+  let hammingDist = 0;
+  for (let i = 0; i < bufferA.length; i += 1) {
+    hammingDist += numOf1inByte[bufferA[i] ^ bufferB[i]];
+  }
+
+  return hammingDist;
 }
