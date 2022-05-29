@@ -95,7 +95,7 @@ class MediaManager {
           const {
             hashes: [, foundIdHash],
           } = this.parseFilename(file.name);
-          const similarity = 1 - base64urlHammingDist(foundIdHash, hashes[1]) / 32;
+          const similarity = 1 - base64urlHammingDist(foundIdHash, hashes[1]) / 256;
 
           return { similarity, info };
         })

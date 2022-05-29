@@ -9,13 +9,16 @@ import { imageHash } from 'image-hash';
  */
 export function getFileIDHash(fullBodyStream: NodeJS.ReadableStream): Promise<string> {
   const hash = createHash('sha256').setEncoding('base64url');
-  const stream = fullBodyStream.pipe(hash);
 
   return new Promise((resolve, reject) => {
+    fullBodyStream.on('error', reject);
+
     let idHash = '';
-    stream.on('data', chunk => (idHash += chunk));
-    stream.on('end', () => resolve(idHash));
-    stream.on('error', reject);
+    fullBodyStream
+      .pipe(hash)
+      .on('data', chunk => (idHash += chunk))
+      .on('end', () => resolve(idHash))
+      .on('error', reject);
   });
 }
 
@@ -37,7 +40,7 @@ export async function getImageSearchHashes(
     const stream =
       fileSize <= IMAGE_RESIZE_THRESHOLD
         ? fullBodyStream
-        : fullBodyStream.pipe(
+        : fullBodyStream.on('error', reject).pipe(
             sharp().resize({
               width: RESIZED_IMAGE_DIMENSION,
               height: RESIZED_IMAGE_DIMENSION,
@@ -51,17 +54,17 @@ export async function getImageSearchHashes(
     stream.on('error', reject);
   });
 
-  return Promise.all([imageHashAsync(imageBuffer, 6), imageHashAsync(imageBuffer, 64)]);
+  return Promise.all([imageHashAsync(imageBuffer, 6), imageHashAsync(imageBuffer, 16)]);
 }
 
 function imageHashAsync(buffer: Buffer, bits: number): Promise<string> {
   return new Promise((resolve, reject) => {
     imageHash({ data: buffer }, bits, true, (error: Error | null, data: string): void => {
+      /* istanbul ignore if */
       if (error) {
-        console.error(error);
         reject(error);
       } else {
-        resolve(data);
+        resolve(Buffer.from(data, 'hex').toString('base64url'));
       }
     });
   });
@@ -70,7 +73,7 @@ function imageHashAsync(buffer: Buffer, bits: number): Promise<string> {
 /**
  * Number of bit 1 in a byte
  */
-const numOf1inByte = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
+const numOf1inHalfByte = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
 
 /**
  * Return the hamming distance between the two base64url encoded hash
@@ -81,7 +84,10 @@ export function base64urlHammingDist(hashA: string, hashB: string): number {
 
   let hammingDist = 0;
   for (let i = 0; i < bufferA.length; i += 1) {
-    hammingDist += numOf1inByte[bufferA[i] ^ bufferB[i]];
+    const xor = bufferA[i] ^ bufferB[i];
+
+    hammingDist +=
+      numOf1inHalfByte[(xor & 240) /* F0 */ >> 4] + numOf1inHalfByte[xor & 15 /* 0F */];
   }
 
   return hammingDist;
