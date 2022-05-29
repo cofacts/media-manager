@@ -135,7 +135,7 @@ class MediaManager {
       if (onUploadStop)
         // Invoke onUploadStop early (even though the actual upload may still in progress)
         onUploadStop(
-          new Error(`File with type=${type} and idHash="${hashes.at(-1)}" already exists`)
+          new Error(`File with type=${type} and idHash="${hashes.join('/')}" already exists`)
         );
 
       // tempFile can be safely accessed only after uploadPromise resolves.
