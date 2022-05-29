@@ -71,7 +71,7 @@ function imageHashAsync(buffer: Buffer, bits: number): Promise<string> {
 }
 
 /**
- * Number of bit 1 in a byte
+ * Number of bit 1 in half-byte (0~F)
  */
 const numOf1inHalfByte = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
 
