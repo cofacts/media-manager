@@ -67,12 +67,12 @@ class MediaManager {
   }
 
   async query({ url }: QueryOptions): Promise<SearchResult> {
-    const { getBody, type, size } = await prepareStream({ url });
+    const { body, type, size } = await prepareStream({ url });
 
     const hashes =
       type === MediaType.image
-        ? await getImageSearchHashes(getBody(), size)
-        : [await getFileIDHash(getBody())];
+        ? await getImageSearchHashes(body, size)
+        : [await getFileIDHash(body)];
 
     // Only use first hash as search hash, no matter it's image or file
     const prefix = this.genFileName({ type, hashes: [hashes[0]] });
@@ -104,7 +104,7 @@ class MediaManager {
   }
 
   async insert({ url, onUploadStop }: InsertOptions): Promise<FileInfo> {
-    const { getBody, type, contentType, clone, size } = await prepareStream({ url });
+    const { body, type, contentType, size } = await prepareStream({ url });
 
     // Temporary file name used when uploading the data before idHash is calculated
     //
@@ -114,8 +114,9 @@ class MediaManager {
 
     const tempFile = this.bucket.file(`${this.prefix}temp/${tempFileName}`);
 
-    // No need to await, just keep uploading.
-    const uploadPromise = pipeline(clone(), tempFile.createWriteStream({ contentType }));
+    // Must not await this promise because we still need to pipe body to another writable stream
+    // for hash calculation below
+    const uploadPromise = pipeline(body, tempFile.createWriteStream({ contentType }));
 
     uploadPromise.catch(error => {
       if (onUploadStop) onUploadStop(error);
@@ -123,8 +124,8 @@ class MediaManager {
 
     const hashes =
       type === MediaType.image
-        ? await getImageSearchHashes(getBody(), size)
-        : [await getFileIDHash(getBody())];
+        ? await getImageSearchHashes(body, size)
+        : [await getFileIDHash(body)];
 
     const destFile = this.bucket.file(this.genFileName({ type, hashes }));
 
