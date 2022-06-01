@@ -45,34 +45,48 @@ export async function getImageSearchHashes(
 
   // Buffer for the image; if image too large, it is compressed
   const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
-    let stream = fullBodyStream.on('error', reject);
+    /**
+     * @param prefix - the string to add to error.message
+     */
+    /* istanbul ignore next */
+    function rejectWithPrefix(prefix: string): (e: Error) => void {
+      return (error: Error) => {
+        error.message = `${prefix} ${error.message}`;
+        reject(error);
+      };
+    }
+
+    let stream = fullBodyStream.on(
+      'error',
+      rejectWithPrefix('[getImageSearchHashes][fullBodyStream]')
+    );
 
     if (fileSize > IMAGE_RESIZE_THRESHOLD) {
       stream = stream.pipe(
-        sharp().resize({
-          width: RESIZED_IMAGE_DIMENSION,
-          height: RESIZED_IMAGE_DIMENSION,
-          fit: 'inside',
-        })
+        sharp()
+          .resize({
+            width: RESIZED_IMAGE_DIMENSION,
+            height: RESIZED_IMAGE_DIMENSION,
+            fit: 'inside',
+          })
+          .on('error', rejectWithPrefix('[getImageSearchHashes][sharp.resize]'))
       );
     }
 
     // Convert to webp if original image format is not supported by image-hash
     if (!SUPPORTED_CONTENT_TYPES.includes(ext)) {
       ext = 'image/webp';
-      stream = stream.pipe(sharp().webp({ lossless: true }));
+      stream = stream.pipe(
+        sharp()
+          .webp({ lossless: true })
+          .on('error', rejectWithPrefix('[getImageSearchHashes][sharp.webp]'))
+      );
     }
 
     const chunks: Buffer[] = [];
     stream.on('data', chunk => chunks.push(chunk));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on(
-      'error',
-      /* istanbul ignore next */ error => {
-        error.message = `[getImageSearchHashes][sharp] ${error.message}`;
-        reject(error);
-      }
-    );
+    stream.on('error', rejectWithPrefix('[getImageSearchHashes][buffer]'));
   });
 
   return Promise.all([imageHashAsync(imageBuffer, ext, 6), imageHashAsync(imageBuffer, ext, 16)]);
