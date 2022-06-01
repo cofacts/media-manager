@@ -66,7 +66,7 @@ describe('getImageSearchHashes', () => {
     await expect(getImageSearchHashes(infileStream, size, 'image/gif')).resolves
       .toMatchInlineSnapshot(`
             Array [
-              "wYbSaQ",
+              "g4bSaQ",
               "4QD5AHs4_6oBDA-MP5zfnAucDpyOHP4cuhx2HnQe8BI",
             ]
           `);

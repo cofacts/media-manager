@@ -29,6 +29,9 @@ const RESIZED_IMAGE_DIMENSION = 1024; // Max image size = square(RESIZED_IMAGE_D
 // The content types supported by image-hash
 const SUPPORTED_CONTENT_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
+// A callback for attaching sharp chained methods
+type SharpProcessor = (s: sharp.Sharp) => sharp.Sharp;
+
 /**
  * Consumes image stream and calculate its ID hash
  *
@@ -43,50 +46,36 @@ export async function getImageSearchHashes(
 ): Promise<ReadonlyArray<string>> {
   let ext = contentType.parse(contentTypeStr).type;
 
-  // Buffer for the image; if image too large, it is compressed
-  const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
-    /**
-     * @param prefix - the string to add to error.message
-     */
-    /* istanbul ignore next */
-    function rejectWithPrefix(prefix: string): (e: Error) => void {
-      return (error: Error) => {
-        error.message = `${prefix} ${error.message}`;
-        reject(error);
-      };
-    }
+  const sharpProcessors: SharpProcessor[] = [];
 
-    let stream = fullBodyStream.on(
-      'error',
-      rejectWithPrefix('[getImageSearchHashes][fullBodyStream]')
+  if (fileSize > IMAGE_RESIZE_THRESHOLD) {
+    sharpProcessors.push(sharp =>
+      sharp.resize({
+        width: RESIZED_IMAGE_DIMENSION,
+        height: RESIZED_IMAGE_DIMENSION,
+        fit: 'inside',
+      })
     );
+  }
 
-    if (fileSize > IMAGE_RESIZE_THRESHOLD) {
-      stream = stream.pipe(
-        sharp()
-          .resize({
-            width: RESIZED_IMAGE_DIMENSION,
-            height: RESIZED_IMAGE_DIMENSION,
-            fit: 'inside',
-          })
-          .on('error', rejectWithPrefix('[getImageSearchHashes][sharp.resize]'))
-      );
-    }
+  // Convert to webp if original image format is not supported by image-hash
+  if (!SUPPORTED_CONTENT_TYPES.includes(ext)) {
+    ext = 'image/webp';
+    sharpProcessors.push(sharp => sharp.webp({ lossless: true }));
+  }
 
-    // Convert to webp if original image format is not supported by image-hash
-    if (!SUPPORTED_CONTENT_TYPES.includes(ext)) {
-      ext = 'image/webp';
-      stream = stream.pipe(
-        sharp()
-          .webp({ lossless: true })
-          .on('error', rejectWithPrefix('[getImageSearchHashes][sharp.webp]'))
-      );
-    }
-
+  // Buffer for the image
+  const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+    const stream =
+      sharpProcessors.length === 0
+        ? fullBodyStream
+        : fullBodyStream.pipe(
+            sharpProcessors.reduce((sharp, processor) => processor(sharp), sharp())
+          );
     const chunks: Buffer[] = [];
     stream.on('data', chunk => chunks.push(chunk));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', rejectWithPrefix('[getImageSearchHashes][buffer]'));
+    stream.on('error', reject);
   });
 
   return Promise.all([imageHashAsync(imageBuffer, ext, 6), imageHashAsync(imageBuffer, ext, 16)]);
