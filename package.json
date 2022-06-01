@@ -32,6 +32,7 @@
   "author": "Cofacts message reporting chatbot and crowd-sourced fact-checking community (「Cofacts 真的假的」訊息回報機器人與查證協作社群)",
   "module": "dist/media-manager.esm.js",
   "devDependencies": {
+    "@types/content-type": "^1.1.5",
     "@types/node-fetch": "^2.6.1",
     "@types/serve-handler": "^6.1.1",
     "@types/sharp": "^0.30.2",
@@ -44,6 +45,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^5.19.4",
+    "content-type": "^1.0.4",
     "image-hash": "^5.3.1",
     "node-fetch": "^2.6.7",
     "sharp": "^0.30.5"

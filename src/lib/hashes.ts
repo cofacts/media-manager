@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import sharp from 'sharp';
 import { imageHash } from 'image-hash';
+import contentType from 'content-type';
 
 /**
  * Consumes stream and calculate Non-image File ID hash.
@@ -25,43 +26,64 @@ export function getFileIDHash(fullBodyStream: NodeJS.ReadableStream): Promise<st
 const IMAGE_RESIZE_THRESHOLD = 1024 * 1024; // 1MB
 const RESIZED_IMAGE_DIMENSION = 1024; // Max image size = square(RESIZED_IMAGE_DIMENSION)
 
+// The content types supported by image-hash
+const SUPPORTED_CONTENT_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
 /**
  * Consumes image stream and calculate its ID hash
  *
  * @param fullBodyStream - Stream for file body
  * @param fileSize - number of bytes of the content
+ * @parma contentType - Content-type header of the fullBodyStream
  */
 export async function getImageSearchHashes(
   fullBodyStream: NodeJS.ReadableStream,
-  fileSize: number
+  fileSize: number,
+  contentTypeStr: string
 ): Promise<ReadonlyArray<string>> {
+  let ext = contentType.parse(contentTypeStr).type;
+
   // Buffer for the image; if image too large, it is compressed
   const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
-    const stream =
-      fileSize <= IMAGE_RESIZE_THRESHOLD
-        ? fullBodyStream
-        : fullBodyStream.on('error', reject).pipe(
-            sharp().resize({
-              width: RESIZED_IMAGE_DIMENSION,
-              height: RESIZED_IMAGE_DIMENSION,
-              fit: 'inside',
-            })
-          );
+    let stream = fullBodyStream.on('error', reject);
+
+    if (fileSize > IMAGE_RESIZE_THRESHOLD) {
+      stream = stream.pipe(
+        sharp().resize({
+          width: RESIZED_IMAGE_DIMENSION,
+          height: RESIZED_IMAGE_DIMENSION,
+          fit: 'inside',
+        })
+      );
+    }
+
+    // Convert to webp if original image format is not supported by image-hash
+    if (!SUPPORTED_CONTENT_TYPES.includes(ext)) {
+      ext = 'image/webp';
+      stream = stream.pipe(sharp().webp({ lossless: true }));
+    }
 
     const chunks: Buffer[] = [];
     stream.on('data', chunk => chunks.push(chunk));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', reject);
+    stream.on(
+      'error',
+      /* istanbul ignore next */ error => {
+        error.message = `[getImageSearchHashes][sharp] ${error.message}`;
+        reject(error);
+      }
+    );
   });
 
-  return Promise.all([imageHashAsync(imageBuffer, 6), imageHashAsync(imageBuffer, 16)]);
+  return Promise.all([imageHashAsync(imageBuffer, ext, 6), imageHashAsync(imageBuffer, ext, 16)]);
 }
 
-function imageHashAsync(buffer: Buffer, bits: number): Promise<string> {
+function imageHashAsync(buffer: Buffer, ext: string, bits: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    imageHash({ data: buffer }, bits, true, (error: Error | null, data: string): void => {
+    imageHash({ data: buffer, ext }, bits, true, (error: Error | null, data: string): void => {
       /* istanbul ignore if */
       if (error) {
+        error.message = `[getImageSearchHashes][imageHash] ${error.message}`;
         reject(error);
       } else {
         resolve(Buffer.from(data, 'hex').toString('base64url'));

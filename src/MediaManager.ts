@@ -67,11 +67,11 @@ class MediaManager {
   }
 
   async query({ url }: QueryOptions): Promise<SearchResult> {
-    const { body, type, size } = await prepareStream({ url });
+    const { body, type, contentType, size } = await prepareStream({ url });
 
     const hashes =
       type === MediaType.image
-        ? await getImageSearchHashes(body, size)
+        ? await getImageSearchHashes(body, size, contentType)
         : [await getFileIDHash(body)];
 
     // Only use first hash as search hash, no matter it's image or file
@@ -124,7 +124,7 @@ class MediaManager {
 
     const hashes =
       type === MediaType.image
-        ? await getImageSearchHashes(body, size)
+        ? await getImageSearchHashes(body, size, contentType)
         : [await getFileIDHash(body)];
 
     const destFile = this.bucket.file(this.genFileName({ type, hashes }));

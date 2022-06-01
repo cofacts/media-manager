@@ -30,12 +30,13 @@ describe('getFileIDHash', () => {
 });
 
 describe('getImageSearchHashes', () => {
-  it('generates hashes for small file', async () => {
+  it('generates hashes for small files', async () => {
     const smallImage = path.resolve(__dirname, '../../../test/fixtures/small.jpg');
     const infileStream = fs.createReadStream(smallImage);
     const { size } = fs.statSync(smallImage);
 
-    await expect(getImageSearchHashes(infileStream, size)).resolves.toMatchInlineSnapshot(`
+    await expect(getImageSearchHashes(infileStream, size, 'image/jpeg')).resolves
+      .toMatchInlineSnapshot(`
             Array [
               "vDph4g",
               "__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
@@ -43,7 +44,33 @@ describe('getImageSearchHashes', () => {
           `);
   });
 
-  // it('generates hashes for large file')
+  it('generates hashes for large files', async () => {
+    const bigImage = path.resolve(__dirname, '../../../test/fixtures/big.jpg');
+    const infileStream = fs.createReadStream(bigImage);
+    const { size } = fs.statSync(bigImage);
+
+    await expect(getImageSearchHashes(infileStream, size, 'image/jpeg')).resolves
+      .toMatchInlineSnapshot(`
+            Array [
+              "B-4PlA",
+              "AAAAAP__f_8n-D_wP4A-ANR_wnPAI8DHwGfA18AXwP8",
+            ]
+          `);
+  });
+
+  it('generates hashes for animated gif', async () => {
+    const gif = path.resolve(__dirname, '../../../test/fixtures/animated.gif');
+    const infileStream = fs.createReadStream(gif);
+    const { size } = fs.statSync(gif);
+
+    await expect(getImageSearchHashes(infileStream, size, 'image/gif')).resolves
+      .toMatchInlineSnapshot(`
+            Array [
+              "wYbSaQ",
+              "4QD5AHs4_6oBDA-MP5zfnAucDpyOHP4cuhx2HnQe8BI",
+            ]
+          `);
+  });
 });
 
 describe('base64urlHammingDist', () => {
