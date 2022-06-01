@@ -135,4 +135,46 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
       `[Error: File with type=file and idHash="Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU" already exists]`
     );
   }, 30000);
+
+  it('can upload and query image file', async () => {
+    let uploadInfo: FileInfo = { id: '', url: '', type: MediaType.file };
+
+    // Resolves on upload complete.
+    //
+    const uploadError = await new Promise(async resolve => {
+      uploadInfo = await mediaManager.insert({
+        url: `${serverUrl}/small.jpg`,
+        onUploadStop: resolve,
+      });
+
+      expect(uploadInfo.id).toMatchInlineSnapshot(
+        `"image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8"`
+      );
+      expect(uploadInfo.type).toBe('image');
+    });
+
+    expect(uploadError).toBe(null);
+
+    // Check if can query via similar image
+    const queryResult = await mediaManager.query({ url: `${serverUrl}/small-similar.jpg` });
+    queryResult.hits[0].info.url = ''; // Remove env related info before snapshot
+    expect(queryResult).toMatchInlineSnapshot(`
+      Object {
+        "hits": Array [
+          Object {
+            "info": Object {
+              "id": "image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
+              "type": "image",
+              "url": "",
+            },
+            "similarity": 0.9765625,
+          },
+        ],
+        "queryInfo": Object {
+          "id": "image.vDph4g.n_-AD4aDgB-bG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
+          "type": "image",
+        },
+      }
+    `);
+  }, 30000);
 }
