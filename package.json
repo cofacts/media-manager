@@ -28,7 +28,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "media-manager",
+  "name": "@cofacts/media-manager",
   "author": "Cofacts message reporting chatbot and crowd-sourced fact-checking community (「Cofacts 真的假的」訊息回報機器人與查證協作社群)",
   "module": "dist/media-manager.esm.js",
   "devDependencies": {
