@@ -88,9 +88,11 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '100k.txt'), 'utf8');
 
-    // Check if user can get identical file from returned URL
+    // Check if user can get identical file and expected content-type from returned URL
     //
-    const fileViaUrl = await (await fetch(uploadInfo.url)).text();
+    const resp = await fetch(uploadInfo.url);
+    expect(resp.headers.get('Content-Type')).toMatchInlineSnapshot(`"text/plain; charset=utf-8"`);
+    const fileViaUrl = await resp.text();
     expect(fileViaUrl).toEqual(originalFile);
 
     // Check getContent
