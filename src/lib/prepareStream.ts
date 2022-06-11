@@ -35,8 +35,7 @@ async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStream
   const contentType = resp.headers.get('content-type') || '';
   const contentTypeBeforeSlash = contentType.split('/')[0].toLowerCase();
 
-  if (!contentType || !contentTypeBeforeSlash)
-    throw new Error(`No content type header provided by ${url}`);
+  if (!contentTypeBeforeSlash) throw new Error(`No content type header provided by ${url}`);
 
   let type: MediaType;
   switch (contentTypeBeforeSlash) {
