@@ -96,4 +96,4 @@ If the environment variables are provided in `.env`, running `npm t` will also t
 2. Check version bump and push to `main` branch
 3. Wait for build pass
 4. [Create a release on Github](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release) using the version tag; it will trigger publication of the version on npm.
-    - If you made a fork to @cofacts/media-manager, please make sure `NPM_TOKEN` secret exists in the Github action secret.
+    - If you forked `@cofacts/media-manager` to your account, please make sure `NPM_TOKEN` secret exists in the Github action secret.
