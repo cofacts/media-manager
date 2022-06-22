@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.0.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -28,7 +28,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "media-manager",
+  "name": "@cofacts/media-manager",
   "author": "Cofacts message reporting chatbot and crowd-sourced fact-checking community (「Cofacts 真的假的」訊息回報機器人與查證協作社群)",
   "module": "dist/media-manager.esm.js",
   "devDependencies": {
@@ -49,5 +49,11 @@
     "image-hash": "^5.3.1",
     "node-fetch": "^2.6.7",
     "sharp": "^0.30.5"
-  }
+  },
+  "keywords": [
+    "Multimedia information retrieval",
+    "Image search",
+    "Near-duplicate image search",
+    "Multimedia indexing"
+  ]
 }
