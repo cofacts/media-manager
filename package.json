@@ -8,18 +8,15 @@
     "src"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=16"
   },
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
+    "prepublishOnly": "tsdx build"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -34,22 +31,18 @@
   "name": "media-manager",
   "author": "Cofacts message reporting chatbot and crowd-sourced fact-checking community (「Cofacts 真的假的」訊息回報機器人與查證協作社群)",
   "module": "dist/media-manager.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/media-manager.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/media-manager.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.8",
+    "@types/node-fetch": "^2.6.1",
+    "@types/serve-handler": "^6.1.1",
+    "dotenv": "^16.0.1",
     "husky": "^8.0.1",
-    "size-limit": "^7.0.8",
+    "serve-handler": "^6.1.3",
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typescript": "^4.6.4"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^5.19.4",
+    "node-fetch": "^2.6.7"
   }
 }

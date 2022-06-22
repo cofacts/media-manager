@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node: ['18.x']
+        node: ['16.x']
         os: [ubuntu-latest]
 
     steps:
@@ -27,6 +27,10 @@ jobs:
 
       - name: Test
         run: npm run test -- --ci --coverage --maxWorkers=2
+        env:
+          CREDENTIALS_JSON: ${{ secrets.CREDENTIALS_JSON }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          PREFIX: github/
 
       - name: Build
         run: npm run build
