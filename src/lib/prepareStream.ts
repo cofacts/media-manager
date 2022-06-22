@@ -12,21 +12,13 @@ type PrepareStreamResult = {
   /** Original content type from url */
   contentType: string;
 
-  /**
-   * Returns latest body from response.
-   * `clone()` may change original resp.body, so we must use accessor to ensure latest body
-   * is fetched.
-   * @see {@link https://github.com/node-fetch/node-fetch/blob/2.x/src/body.js#L409-L410}
-   */
-  getBody: () => NodeJS.ReadableStream;
+  /** File size in byte, read from Content-Length */
+  size: number;
 
   /**
-   * Create and returns a cloned body stream.
-   * Notice that each cloned stream must be consumed along with body stream.
-   *
-   * @see {@link(https://github.com/node-fetch/node-fetch#custom-highwatermark)}
+   * body stream from response.
    */
-  clone: () => NodeJS.ReadableStream;
+  body: NodeJS.ReadableStream;
 };
 
 async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStreamResult> {
@@ -36,6 +28,9 @@ async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStream
   const contentTypeBeforeSlash = contentType.split('/')[0].toLowerCase();
 
   if (!contentTypeBeforeSlash) throw new Error(`No content type header provided by ${url}`);
+
+  const size = +(resp.headers.get('content-length') ?? 0);
+  if (size === 0) throw new Error(`No content-length provided by ${url}, or content-length is 0`);
 
   let type: MediaType;
   switch (contentTypeBeforeSlash) {
@@ -51,15 +46,8 @@ async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStream
   return {
     type,
     contentType,
-    getBody: () => {
-      if (!resp.body) throw new Error(`No body is returned from ${url}`);
-      return resp.body;
-    },
-    clone: () => {
-      const body = resp.clone().body;
-      if (!body) throw new Error('Response stream clone failed');
-      return body;
-    },
+    size,
+    body: resp.body,
   };
 }
 
