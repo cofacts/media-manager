@@ -8,7 +8,7 @@ export interface SearchHit {
   /** Similarity between 0 and 1 */
   similarity: number;
   /** Metadata for the found media entry */
-  info: MediaEntry;
+  entry: MediaEntry;
 }
 
 export enum MediaType {

@@ -67,21 +67,26 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
   it('can upload and query txt file', async () => {
     const testFileUrl = `${serverUrl}/100k.txt`;
-    let uploadInfo: MediaEntry = { id: '', type: MediaType.file, getUrl: () => '', variants: [] };
+    let insertedEntry: MediaEntry = {
+      id: '',
+      type: MediaType.file,
+      getUrl: () => '',
+      variants: [],
+    };
 
     // First upload.
     // Resolves on upload complete.
     //
     const uploadError = await new Promise(async resolve => {
-      uploadInfo = await mediaManager.insert({
+      insertedEntry = await mediaManager.insert({
         url: testFileUrl,
         onUploadStop: resolve,
       });
 
-      expect(uploadInfo.id).toMatchInlineSnapshot(
+      expect(insertedEntry.id).toMatchInlineSnapshot(
         `"file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU"`
       );
-      expect(uploadInfo.type).toBe('file');
+      expect(insertedEntry.type).toBe('file');
     });
 
     expect(uploadError).toBe(null);
@@ -90,7 +95,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     // Check if user can get identical file and expected content-type from returned URL
     //
-    const resp = await fetch(uploadInfo.getUrl('original'));
+    const resp = await fetch(insertedEntry.getUrl('original'));
     expect(resp.headers.get('Content-Type')).toMatchInlineSnapshot(`"text/plain; charset=utf-8"`);
     const fileViaUrl = await resp.text();
     expect(fileViaUrl).toEqual(originalFile);
@@ -100,34 +105,34 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     const fileViaGetContent = await new Promise(resolve => {
       let result = '';
       mediaManager
-        .getContent(uploadInfo.id, 'original')
+        .getContent(insertedEntry.id, 'original')
         .on('data', chunk => (result += chunk))
         .on('close', () => resolve(result));
     });
     expect(fileViaGetContent).toEqual(originalFile);
 
-    // Check if getInfo is identical to uploadInfo
+    // Check if get entry is identical to inserted entry
     //
-    const infoViaGetInfo = await mediaManager.getInfo(uploadInfo.id);
-    expect(JSON.stringify(infoViaGetInfo)).toEqual(JSON.stringify(uploadInfo));
+    const mediaEntry = await mediaManager.get(insertedEntry.id);
+    expect(JSON.stringify(mediaEntry)).toEqual(JSON.stringify(insertedEntry));
 
     // Check if query result returns the uploaded file
     const queryResult = await mediaManager.query({ url: testFileUrl });
-    expect(queryResult).toHaveProperty(['queryInfo', 'id'], uploadInfo.id);
+    expect(queryResult).toHaveProperty(['queryInfo', 'id'], insertedEntry.id);
     expect(queryResult.hits).toHaveLength(1);
     expect(queryResult).toHaveProperty(['hits', 0, 'similarity'], 1);
-    expect(queryResult).toHaveProperty(['hits', 0, 'info', 'id'], uploadInfo.id);
+    expect(queryResult).toHaveProperty(['hits', 0, 'entry', 'id'], insertedEntry.id);
 
     // Test uploading duplicate file
     //
     const reuploadError = await new Promise(async resolve => {
-      const info = await mediaManager.insert({
+      const entry = await mediaManager.insert({
         url: testFileUrl,
         onUploadStop: resolve,
       });
 
       // Expect returned info are totally identical to the first upload
-      expect(JSON.stringify(info)).toEqual(JSON.stringify(uploadInfo));
+      expect(JSON.stringify(entry)).toEqual(JSON.stringify(insertedEntry));
     });
 
     // Expect file already exists error
@@ -137,20 +142,25 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   }, 30000);
 
   it('can upload and query image file', async () => {
-    let uploadInfo: MediaEntry = { id: '', type: MediaType.file, getUrl: () => '', variants: [] };
+    let insertedEntry: MediaEntry = {
+      id: '',
+      type: MediaType.file,
+      getUrl: () => '',
+      variants: [],
+    };
 
     // Resolves on upload complete.
     //
     const uploadError = await new Promise(async resolve => {
-      uploadInfo = await mediaManager.insert({
+      insertedEntry = await mediaManager.insert({
         url: `${serverUrl}/small.jpg`,
         onUploadStop: resolve,
       });
 
-      expect(uploadInfo.id).toMatchInlineSnapshot(
+      expect(insertedEntry.id).toMatchInlineSnapshot(
         `"image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8"`
       );
-      expect(uploadInfo.type).toBe('image');
+      expect(insertedEntry.type).toBe('image');
     });
 
     expect(uploadError).toBe(null);
@@ -161,7 +171,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
       Object {
         "hits": Array [
           Object {
-            "info": Object {
+            "entry": Object {
               "getUrl": [Function],
               "id": "image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
               "type": "image",

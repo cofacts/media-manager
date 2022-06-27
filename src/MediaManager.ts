@@ -62,14 +62,14 @@ class MediaManager {
   }
 
   /**
-   * @returns `id` in {@link MediaEntry.id FileInfo}
+   * @returns `id` in {@link MediaEntry.id MediaEntry}
    */
   private genId({ type, hashes }: MediaEntryIdentifier) {
     return [type, ...hashes].join(ID_DELIMITER);
   }
 
   /**
-   * @param id - `id` in {@link MediaEntry.id FileInfo}
+   * @param id - `id` in {@link MediaEntry.id MediaEntry}
    */
   private parseId(id: string): MediaEntryIdentifier {
     const [type, ...hashes] = id.split(ID_DELIMITER);
@@ -106,13 +106,13 @@ class MediaManager {
       queryInfo: { id: this.genId({ type, hashes }), type },
       hits: Object.entries(entryVariantMap)
         .map(([id, variantMap]) => {
-          const info = {
+          const entry = {
             id,
             type,
             ...variantProps(variantMap),
           };
 
-          if (type !== MediaType.image) return { similarity: 1, info };
+          if (type !== MediaType.image) return { similarity: 1, entry };
 
           // Image: calculate similarity between id hash of query and id hash of found file
           const {
@@ -120,7 +120,7 @@ class MediaManager {
           } = this.parseId(id);
           const similarity = 1 - base64urlHammingDist(foundIdHash, hashes[1]) / 256;
 
-          return { similarity, info };
+          return { similarity, entry };
         })
         .sort((a, b) => b?.similarity - a.similarity),
     };
@@ -207,7 +207,7 @@ class MediaManager {
 
   // Get media entry by ID from GCS. Null if specified media entry does not exist.
   //
-  async getInfo(id: string): Promise<MediaEntry | null> {
+  async get(id: string): Promise<MediaEntry | null> {
     const { type, hashes } = this.parseId(id);
     const prefix = this.genMediaEntryName({ type, hashes });
     const [files] = await this.bucket.getFiles({ prefix });
