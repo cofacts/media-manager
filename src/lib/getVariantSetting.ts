@@ -13,10 +13,10 @@ type GetVariantSettingsOptions = {
 };
 
 type VariantSetting = {
-  /** The name of variant */
+  /** The name of variant. Maps to file name under the media entry directory. */
   name: string;
 
-  /**  */
+  /** The transform stream that takes file from input stream and outputs the variant file. */
   transform: NodeJS.ReadWriteStream;
 };
 
