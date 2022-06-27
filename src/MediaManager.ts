@@ -1,7 +1,7 @@
 import { Bucket, Storage, File } from '@google-cloud/storage';
 import { pipeline } from 'stream/promises';
 import prepareStream from './lib/prepareStream';
-import getVariantSettings from './lib/getVariantSetting';
+import getVariantSettings from './lib/getVariantSettings';
 import { getFileIDHash, getImageSearchHashes, base64urlHammingDist } from './lib/hashes';
 import {
   SearchResult,
