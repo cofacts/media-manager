@@ -20,6 +20,9 @@ type VariantSetting = {
   transform: NodeJS.ReadWriteStream;
 };
 
+/**
+ * @returns The available variants for the given input file type.
+ */
 function getVariantSettings({ type }: GetVariantSettingsOptions): VariantSetting[] {
   switch (type) {
     default:
