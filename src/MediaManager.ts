@@ -144,7 +144,7 @@ class MediaManager {
     // Must not await this promise because we still need to pipe body to another writable stream
     // for hash calculation below
     const uploadPromise = Promise.all(
-      variantSettings.map(({ transform }, i) =>
+      variantSettings.map(({ transform, contentType }, i) =>
         pipeline(body, transform, tempVariantFiles[i].createWriteStream({ contentType }))
       )
     );

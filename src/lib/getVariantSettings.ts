@@ -18,18 +18,22 @@ type VariantSetting = {
 
   /** The transform stream that takes file from input stream and outputs the variant file. */
   transform: NodeJS.ReadWriteStream;
+
+  /** The content type of the transform output of this variant. */
+  contentType: string;
 };
 
 /**
  * @returns The available variants for the given input file type.
  */
-function getVariantSettings({ type }: GetVariantSettingsOptions): VariantSetting[] {
+function getVariantSettings({ type, contentType }: GetVariantSettingsOptions): VariantSetting[] {
   switch (type) {
     default:
       return [
         {
           name: 'original',
           transform: new PassThrough(),
+          contentType, // Mirrors source content type
         },
       ];
   }
