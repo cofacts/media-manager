@@ -6,7 +6,7 @@ import fs from 'fs/promises';
 import { Storage } from '@google-cloud/storage';
 
 import MediaManager from '../src/MediaManager';
-import { FileInfo, MediaType } from '../src/types';
+import { MediaEntry, MediaType } from '../src/types';
 
 require('dotenv').config();
 
@@ -67,7 +67,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
   it('can upload and query txt file', async () => {
     const testFileUrl = `${serverUrl}/100k.txt`;
-    let uploadInfo: FileInfo = { id: '', url: '', type: MediaType.file };
+    let uploadInfo: MediaEntry = { id: '', type: MediaType.file, getUrl: () => '', variants: [] };
 
     // First upload.
     // Resolves on upload complete.
@@ -90,7 +90,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     // Check if user can get identical file and expected content-type from returned URL
     //
-    const resp = await fetch(uploadInfo.url);
+    const resp = await fetch(uploadInfo.getUrl('original'));
     expect(resp.headers.get('Content-Type')).toMatchInlineSnapshot(`"text/plain; charset=utf-8"`);
     const fileViaUrl = await resp.text();
     expect(fileViaUrl).toEqual(originalFile);
@@ -100,7 +100,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     const fileViaGetContent = await new Promise(resolve => {
       let result = '';
       mediaManager
-        .getContent(uploadInfo.id)
+        .getContent(uploadInfo.id, 'original')
         .on('data', chunk => (result += chunk))
         .on('close', () => resolve(result));
     });
@@ -109,7 +109,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     // Check if getInfo is identical to uploadInfo
     //
     const infoViaGetInfo = await mediaManager.getInfo(uploadInfo.id);
-    expect(infoViaGetInfo).toEqual(uploadInfo);
+    expect(JSON.stringify(infoViaGetInfo)).toEqual(JSON.stringify(uploadInfo));
 
     // Check if query result returns the uploaded file
     const queryResult = await mediaManager.query({ url: testFileUrl });
@@ -127,7 +127,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
       });
 
       // Expect returned info are totally identical to the first upload
-      expect(info).toStrictEqual(uploadInfo);
+      expect(JSON.stringify(info)).toEqual(JSON.stringify(uploadInfo));
     });
 
     // Expect file already exists error
@@ -137,7 +137,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   }, 30000);
 
   it('can upload and query image file', async () => {
-    let uploadInfo: FileInfo = { id: '', url: '', type: MediaType.file };
+    let uploadInfo: MediaEntry = { id: '', type: MediaType.file, getUrl: () => '', variants: [] };
 
     // Resolves on upload complete.
     //
@@ -157,15 +157,17 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     // Check if can query via similar image
     const queryResult = await mediaManager.query({ url: `${serverUrl}/small-similar.jpg` });
-    queryResult.hits[0].info.url = ''; // Remove env related info before snapshot
     expect(queryResult).toMatchInlineSnapshot(`
       Object {
         "hits": Array [
           Object {
             "info": Object {
+              "getUrl": [Function],
               "id": "image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
               "type": "image",
-              "url": "",
+              "variants": Array [
+                "original",
+              ],
             },
             "similarity": 0.9765625,
           },

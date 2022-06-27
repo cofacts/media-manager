@@ -7,8 +7,8 @@ export interface SearchResult {
 export interface SearchHit {
   /** Similarity between 0 and 1 */
   similarity: number;
-  /** Metadata for the file */
-  info: FileInfo;
+  /** Metadata for the found media entry */
+  info: MediaEntry;
 }
 
 export enum MediaType {
@@ -30,22 +30,25 @@ export function isMediaType(type: string): type is MediaType {
   }
 }
 
-export interface FileInfo {
+export interface MediaEntry {
   /**
-   * The unique ID for the file.
+   * The unique ID for the media entry.
    * The ID is considered opaque;
    * Applications should not try to decipher this ID. */
   id: string;
 
-  /** Original file public URL */
-  url: string;
+  /** Variant file's public URL */
+  getUrl: (variant: string) => string;
 
   type: MediaType;
+
+  /** Available variants for this media entry */
+  variants: string[];
   // createdAt: Date;
 }
 
 /** ID is the to-be ID if the file is being inserted into database. */
-export type QueryInfo = Pick<FileInfo, 'id' | 'type'>;
+export type QueryInfo = Pick<MediaEntry, 'id' | 'type'>;
 
 export type MediaManagerOptions = {
   /** Google cloud credentail JSON content of a service account.
@@ -90,7 +93,7 @@ export type InsertOptions = {
 
   /**
    * When upload succeeded, onUploadStop(null) will be called.
-   * By this time, returned {@link FileInfo.url} should be usable.
+   * By this time, returned {@link MediaEntry.getUrl} should be usable.
    *
    * If upload fails, onUploadStop(err) will be called, passing the err returned by GCS NodeJS API.
    * If the file already exist, onUploadStop(err) will also be called with an error.
@@ -99,9 +102,9 @@ export type InsertOptions = {
 };
 
 /**
- * Information needed to uniquely identify a file
+ * Information needed to uniquely identify a media entry (directory)
  */
-export type FileIdentifier = {
+export type MediaEntryIdentifier = {
   /** MediaType of the file */
   type: MediaType;
 
@@ -109,4 +112,11 @@ export type FileIdentifier = {
    *  For images, there are 2 layers; for others there is 1
    */
   hashes: ReadonlyArray<string>;
+};
+
+/**
+ * Information needed to uniquely identify a file
+ */
+export type MediaFileIdentifier = MediaEntryIdentifier & {
+  variant: string;
 };
