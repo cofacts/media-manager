@@ -105,6 +105,12 @@ export type InsertOptions = {
    * If the file already exist, onUploadStop(err) will also be called with an error.
    */
   onUploadStop?: (err: Error | null) => void;
+
+  /**
+   * If given, getVariantSettings() settings in constructor is overridden.
+   * Specifies variant settings for this specific insert operation.
+   */
+  getVariantSettings?: GetVariantSettingsFn;
 };
 
 /**

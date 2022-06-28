@@ -129,10 +129,14 @@ class MediaManager {
     };
   }
 
-  async insert({ url, onUploadStop }: InsertOptions): Promise<MediaEntry> {
+  async insert({ url, onUploadStop, getVariantSettings }: InsertOptions): Promise<MediaEntry> {
     const { body, type, contentType, size } = await prepareStream({ url });
 
-    const variantSettings = this.getVariantSettingsFn({ type, contentType, size });
+    const variantSettings = (getVariantSettings ?? this.getVariantSettingsFn)({
+      type,
+      contentType,
+      size,
+    });
 
     // Temporary file name used when uploading the data before idHash is calculated
     //
