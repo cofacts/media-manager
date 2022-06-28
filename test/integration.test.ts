@@ -5,17 +5,14 @@ import fetch from 'node-fetch';
 import fs from 'fs/promises';
 import { Storage } from '@google-cloud/storage';
 
-import MediaManager from '../src/MediaManager';
-import { MediaEntry, MediaType } from '../src/types';
+// Get from public API
+import { MediaManager, MediaEntry, MediaType, variants } from '../src/';
 
 require('dotenv').config();
 
 if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
-  const mediaManager = new MediaManager({
-    credentialsJSON: process.env.CREDENTIALS_JSON,
-    bucketName: process.env.BUCKET_NAME,
-    prefix: process.env.PREFIX,
-  });
+  const credentialsJSON = process.env.CREDENTIALS_JSON;
+  const bucketName = process.env.BUCKET_NAME;
 
   // File server serving test input file in ./fixtures
   //
@@ -66,6 +63,12 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   });
 
   it('can upload and query txt file', async () => {
+    const mediaManager = new MediaManager({
+      credentialsJSON,
+      bucketName,
+      prefix: process.env.PREFIX,
+    });
+
     const testFileUrl = `${serverUrl}/100k.txt`;
     let insertedEntry: MediaEntry = {
       id: '',
@@ -142,6 +145,18 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
   }, 30000);
 
   it('can upload and query image file', async () => {
+    const mediaManager = new MediaManager({
+      credentialsJSON,
+      bucketName,
+      prefix: process.env.PREFIX,
+
+      // Test custom getVariantSettings
+      //
+      getVariantSettings({ contentType }) {
+        return [variants.original(contentType)];
+      },
+    });
+
     let insertedEntry: MediaEntry = {
       id: '',
       type: MediaType.file,
