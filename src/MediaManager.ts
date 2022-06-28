@@ -152,7 +152,11 @@ class MediaManager {
     // for hash calculation below
     const uploadPromise = Promise.all(
       variantSettings.map(({ transform, contentType }, i) =>
-        pipeline(body, transform, tempVariantFiles[i].createWriteStream({ contentType }))
+        pipeline(
+          body,
+          transform,
+          tempVariantFiles[i].createWriteStream({ contentType, gzip: 'auto' })
+        )
       )
     );
 
