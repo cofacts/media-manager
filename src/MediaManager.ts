@@ -1,7 +1,7 @@
 import { Bucket, Storage, File } from '@google-cloud/storage';
 import { pipeline } from 'stream/promises';
 import prepareStream from './lib/prepareStream';
-import getVariantSettings from './lib/getVariantSettings';
+import { defaultGetVariantSettings } from './lib/variants';
 import { getFileIDHash, getImageSearchHashes, base64urlHammingDist } from './lib/hashes';
 import {
   SearchResult,
@@ -13,6 +13,7 @@ import {
   MediaEntryIdentifier,
   MediaFileIdentifier,
   MediaType,
+  GetVariantSettingsFn,
 } from './types';
 
 // URL-safe delimiter for file ID components
@@ -24,11 +25,13 @@ class MediaManager {
     const storage = new Storage({ projectId, credentials });
     this.bucket = storage.bucket(params.bucketName || 'default');
     this.prefix = params.prefix ?? '';
+    this.getVariantSettingsFn = params.getVariantSettings ?? defaultGetVariantSettings;
   }
 
   // The GCS Bucket object
   private bucket: Bucket;
   private prefix: string;
+  private getVariantSettingsFn: GetVariantSettingsFn;
 
   /**
    * @param mediaEntry - Identifier of a directory on GCS, including media type and its hashes
@@ -129,7 +132,7 @@ class MediaManager {
   async insert({ url, onUploadStop }: InsertOptions): Promise<MediaEntry> {
     const { body, type, contentType, size } = await prepareStream({ url });
 
-    const variantSettings = getVariantSettings({ type, contentType, size });
+    const variantSettings = this.getVariantSettingsFn({ type, contentType, size });
 
     // Temporary file name used when uploading the data before idHash is calculated
     //

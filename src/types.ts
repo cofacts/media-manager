@@ -72,6 +72,12 @@ export type MediaManagerOptions = {
    * File structure after this prefix is managed by MediaManager
    */
   prefix?: string;
+
+  /**
+   * Specify the variant settings for each media file being uploaded.
+   * If not given, only 1 variant, `original`, will be provided for all file types.
+   */
+  getVariantSettings?: GetVariantSettingsFn;
 };
 
 export type QueryOptions = {
@@ -120,3 +126,31 @@ export type MediaEntryIdentifier = {
 export type MediaFileIdentifier = MediaEntryIdentifier & {
   variant: string;
 };
+
+export type GetVariantSettingsOptions = {
+  /** Parsed media type */
+  type: MediaType;
+
+  /** Original content type from url */
+  contentType: string;
+
+  /** File size in byte, read from Content-Length */
+  size: number;
+};
+
+export type VariantSetting = {
+  /** The name of variant. Maps to file name under the media entry directory. */
+  name: string;
+
+  /** The transform stream that takes file from input stream and outputs the variant file. */
+  transform: NodeJS.ReadWriteStream;
+
+  /** The content type of the transform output of this variant. */
+  contentType: string;
+};
+
+/**
+ * Given info about the file to upload,
+ * returns the settings to the  available variants for the file.
+ */
+export type GetVariantSettingsFn = (opt: GetVariantSettingsOptions) => VariantSetting[];
