@@ -4,6 +4,7 @@ import handler from 'serve-handler';
 import fetch from 'node-fetch';
 import fs from 'fs/promises';
 import { Storage } from '@google-cloud/storage';
+import sharp from 'sharp';
 
 // Get from public API
 import { MediaManager, MediaEntry, variants } from '../src/';
@@ -96,7 +97,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     // Check if user can get identical file and expected content-type from returned URL
     //
-    const insertedEntryUrl = insertedEntry.getUrl('original');
+    const insertedEntryUrl = insertedEntry.getUrl();
     const resp = await fetch(insertedEntryUrl);
     expect(resp.headers.get('Content-Type')).toMatchInlineSnapshot(`"text/plain; charset=utf-8"`);
     const fileViaUrl = await resp.text();
@@ -160,7 +161,16 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
       // Test custom getVariantSettings
       //
       getVariantSettings({ contentType }) {
-        return [variants.original(contentType)];
+        return [
+          variants.original(contentType),
+          {
+            name: 'webp100w', // resize to width=100 and convert to webp
+            contentType: 'image/webp',
+            transform: sharp()
+              .resize(100)
+              .webp(),
+          },
+        ];
       },
     });
 
@@ -193,6 +203,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
               "type": "image",
               "variants": Array [
                 "original",
+                "webp100w",
               ],
             },
             "similarity": 0.9765625,

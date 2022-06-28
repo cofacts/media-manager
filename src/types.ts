@@ -44,11 +44,11 @@ export interface MediaEntry {
   /** Available variants for this media entry */
   variants: string[];
 
-  /** Variant file's public URL */
-  getUrl: (variant: string) => string;
+  /** Variant file's public URL. Defaults to get original variant. */
+  getUrl: (variant?: string) => string;
 
-  /** Variant file's GCS File object */
-  getFile: (variant: string) => File;
+  /** Variant file's GCS File object. Defaults to get original variant. */
+  getFile: (variant?: string) => File;
 }
 
 /** ID is the to-be ID if the file is being inserted into database. */

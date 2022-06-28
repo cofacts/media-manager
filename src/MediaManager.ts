@@ -1,7 +1,7 @@
 import { Bucket, Storage, File } from '@google-cloud/storage';
 import { pipeline } from 'stream/promises';
 import prepareStream from './lib/prepareStream';
-import { defaultGetVariantSettings } from './lib/variants';
+import { defaultGetVariantSettings, DEFAULT_ORIGINAL_VARIANT_NAME } from './lib/variants';
 import { getFileIDHash, getImageSearchHashes, base64urlHammingDist } from './lib/hashes';
 import {
   SearchResult,
@@ -211,7 +211,10 @@ class MediaManager {
   }
 
   // Get file by ID from GCS
-  getContent(id: string, variant: string): NodeJS.ReadableStream {
+  getContent(
+    id: string,
+    variant: string | undefined = DEFAULT_ORIGINAL_VARIANT_NAME
+  ): NodeJS.ReadableStream {
     const file = this.bucket.file(this.genFileName({ ...this.parseId(id), variant }));
     return file.createReadStream();
   }
@@ -266,10 +269,10 @@ function variantProps(variantFileMap: {
 }): Pick<MediaEntry, 'variants' | 'getUrl' | 'getFile'> {
   return {
     variants: Object.keys(variantFileMap),
-    getUrl(variant) {
+    getUrl(variant = DEFAULT_ORIGINAL_VARIANT_NAME) {
       return getVariantFileOrThrow(variantFileMap, variant).publicUrl();
     },
-    getFile(variant) {
+    getFile(variant = DEFAULT_ORIGINAL_VARIANT_NAME) {
       return getVariantFileOrThrow(variantFileMap, variant);
     },
   };
