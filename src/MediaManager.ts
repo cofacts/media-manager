@@ -236,6 +236,22 @@ class MediaManager {
   }
 }
 
+function getVariantFileOrThrow(
+  variantFileMap: {
+    [variant: string]: File;
+  },
+  variant: string
+): File {
+  const file = variantFileMap[variant];
+  if (!file) {
+    const variants = Object.keys(variantFileMap);
+    throw new Error(
+      `Variant ${variant} does not exist; available variants: ${variants.join(', ')}`
+    );
+  }
+  return file;
+}
+
 /**
  * Helpfer function that returns parts of MediaEntry that is generated from a map of variant to GCS file.
  *
@@ -243,17 +259,14 @@ class MediaManager {
  */
 function variantProps(variantFileMap: {
   [variant: string]: File;
-}): Pick<MediaEntry, 'variants' | 'getUrl'> {
-  const variants = Object.keys(variantFileMap);
+}): Pick<MediaEntry, 'variants' | 'getUrl' | 'getFile'> {
   return {
-    variants,
+    variants: Object.keys(variantFileMap),
     getUrl(variant) {
-      const file = variantFileMap[variant];
-      if (!file)
-        throw new Error(
-          `Variant ${variant} does not exist; available variants: ${variants.join(', ')}`
-        );
-      return file.publicUrl();
+      return getVariantFileOrThrow(variantFileMap, variant).publicUrl();
+    },
+    getFile(variant) {
+      return getVariantFileOrThrow(variantFileMap, variant);
     },
   };
 }

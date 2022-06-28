@@ -1,3 +1,5 @@
+import { File } from '@google-cloud/storage';
+
 export interface SearchResult {
   /** metadata for the queried file */
   queryInfo: QueryInfo;
@@ -37,14 +39,16 @@ export interface MediaEntry {
    * Applications should not try to decipher this ID. */
   id: string;
 
-  /** Variant file's public URL */
-  getUrl: (variant: string) => string;
-
   type: MediaType;
 
   /** Available variants for this media entry */
   variants: string[];
-  // createdAt: Date;
+
+  /** Variant file's public URL */
+  getUrl: (variant: string) => string;
+
+  /** Variant file's GCS File object */
+  getFile: (variant: string) => File;
 }
 
 /** ID is the to-be ID if the file is being inserted into database. */

@@ -6,7 +6,7 @@ import fs from 'fs/promises';
 import { Storage } from '@google-cloud/storage';
 
 // Get from public API
-import { MediaManager, MediaEntry, MediaType, variants } from '../src/';
+import { MediaManager, MediaEntry, variants } from '../src/';
 
 require('dotenv').config();
 
@@ -70,12 +70,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     });
 
     const testFileUrl = `${serverUrl}/100k.txt`;
-    let insertedEntry: MediaEntry = {
-      id: '',
-      type: MediaType.file,
-      getUrl: () => '',
-      variants: [],
-    };
+    let insertedEntry: MediaEntry | undefined;
 
     // First upload.
     // Resolves on upload complete.
@@ -96,19 +91,24 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
 
     const originalFile = await fs.readFile(path.join(__dirname, 'fixtures', '100k.txt'), 'utf8');
 
+    /* istanbul ignore if */
+    if (!insertedEntry) throw new Error('insertEntry should be assigned');
+
     // Check if user can get identical file and expected content-type from returned URL
     //
-    const resp = await fetch(insertedEntry.getUrl('original'));
+    const insertedEntryUrl = insertedEntry.getUrl('original');
+    const resp = await fetch(insertedEntryUrl);
     expect(resp.headers.get('Content-Type')).toMatchInlineSnapshot(`"text/plain; charset=utf-8"`);
     const fileViaUrl = await resp.text();
     expect(fileViaUrl).toEqual(originalFile);
 
     // Check getContent
     //
+    const insertedEntryId = insertedEntry.id; // insertedEntry is not narrowed in callbacks...
     const fileViaGetContent = await new Promise(resolve => {
       let result = '';
       mediaManager
-        .getContent(insertedEntry.id, 'original')
+        .getContent(insertedEntryId, 'original')
         .on('data', chunk => (result += chunk))
         .on('close', () => resolve(result));
     });
@@ -118,6 +118,13 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     //
     const mediaEntry = await mediaManager.get(insertedEntry.id);
     expect(JSON.stringify(mediaEntry)).toEqual(JSON.stringify(insertedEntry));
+
+    // Check not-exist variant
+    expect(() => mediaEntry?.getUrl('notExistVariant')).toThrowErrorMatchingInlineSnapshot(
+      `"Variant notExistVariant does not exist; available variants: original"`
+    );
+    // Check getFile
+    expect(mediaEntry?.getFile('original').publicUrl()).toEqual(insertedEntryUrl);
 
     // Check if query result returns the uploaded file
     const queryResult = await mediaManager.query({ url: testFileUrl });
@@ -157,17 +164,10 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
       },
     });
 
-    let insertedEntry: MediaEntry = {
-      id: '',
-      type: MediaType.file,
-      getUrl: () => '',
-      variants: [],
-    };
-
     // Resolves on upload complete.
     //
     const uploadError = await new Promise(async resolve => {
-      insertedEntry = await mediaManager.insert({
+      const insertedEntry = await mediaManager.insert({
         url: `${serverUrl}/small.jpg`,
         onUploadStop: resolve,
       });
@@ -187,6 +187,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
         "hits": Array [
           Object {
             "entry": Object {
+              "getFile": [Function],
               "getUrl": [Function],
               "id": "image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
               "type": "image",
