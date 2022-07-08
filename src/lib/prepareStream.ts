@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { MediaType } from '../types';
 
-type PrepareStreamInput = {
+type PrepareStreamOptions = {
   url: string;
 };
 
@@ -21,7 +21,11 @@ type PrepareStreamResult = {
   body: NodeJS.ReadableStream;
 };
 
-async function prepareStream({ url }: PrepareStreamInput): Promise<PrepareStreamResult> {
+/**
+ * Given the URL to search or insert, parse metadata from the HTTP response header and prepare the
+ * readable stream the response body.
+ */
+async function prepareStream({ url }: PrepareStreamOptions): Promise<PrepareStreamResult> {
   const resp = await fetch(url);
 
   const contentType = resp.headers.get('content-type') || '';
