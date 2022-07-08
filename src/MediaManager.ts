@@ -210,17 +210,10 @@ class MediaManager {
     };
   }
 
-  // Get file by ID from GCS
-  getContent(
-    id: string,
-    variant: string | undefined = DEFAULT_ORIGINAL_VARIANT_NAME
-  ): NodeJS.ReadableStream {
-    const file = this.bucket.file(this.genFileName({ ...this.parseId(id), variant }));
-    return file.createReadStream();
-  }
-
-  // Get media entry by ID from GCS. Null if specified media entry does not exist.
-  //
+  /**
+   * @param id - `id` in {@link MediaEntry.id MediaEntry}
+   * @returns The {@link MediaEntry MediaEntry}, or null if ID does not map to a media entry on GCS.
+   */
   async get(id: string): Promise<MediaEntry | null> {
     const { type, hashes } = this.parseId(id);
     const prefix = this.genMediaEntryName({ type, hashes });
@@ -240,6 +233,27 @@ class MediaManager {
       type,
       ...variantProps(variantMap),
     };
+  }
+
+  /**
+   * @param id - `id` in {@link MediaEntry.id MediaEntry}
+   * @param variant - Maps to {@link VariantSetting.name}. Defaults to `original`.
+   * @returns GCS File object. Note that this API does not test if the file exists on GCS.
+   */
+  getFile(id: string, variant: string | undefined = DEFAULT_ORIGINAL_VARIANT_NAME): File {
+    return this.bucket.file(this.genFileName({ ...this.parseId(id), variant }));
+  }
+
+  /**
+   * @param id - `id` in {@link MediaEntry.id MediaEntry}
+   * @param variant - Maps to {@link VariantSetting.name}. Defaults to `original`.
+   * @returns a ReadableStream of file content from GCS.
+   */
+  getContent(
+    id: string,
+    variant: string | undefined = DEFAULT_ORIGINAL_VARIANT_NAME
+  ): NodeJS.ReadableStream {
+    return this.getFile(id, variant).createReadStream();
   }
 }
 
@@ -262,7 +276,7 @@ function getVariantFileOrThrow(
 /**
  * Helpfer function that returns parts of MediaEntry that is generated from a map of variant to GCS file.
  *
- * @param variantFileMap - An object that maps variant (string) to GCS File object.
+ * @param variantFileMap - An object that maps {@link VariantSetting.name} to GCS File object.
  */
 function variantProps(variantFileMap: {
   [variant: string]: File;

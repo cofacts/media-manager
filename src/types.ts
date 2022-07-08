@@ -32,6 +32,10 @@ export function isMediaType(type: string): type is MediaType {
   }
 }
 
+/**
+ * A media file entry representing one file uploaded via {@link MediaManager.insert}.
+ * It maps to a directory on GCS hosting different variant of the uploaded file.
+ */
 export interface MediaEntry {
   /**
    * The unique ID for the media entry.
@@ -41,7 +45,7 @@ export interface MediaEntry {
 
   type: MediaType;
 
-  /** Available variants for this media entry */
+  /** Variants that exist on GCS for this media entry */
   variants: string[];
 
   /** Variant file's public URL. Defaults to get original variant. */
@@ -57,23 +61,23 @@ export type QueryInfo = Pick<MediaEntry, 'id' | 'type'>;
 export type MediaManagerOptions = {
   /** Google cloud credentail JSON content of a service account.
    * Must include keys:
-   * - project_id
-   * - private_key
-   * - client_email
+   * - `project_id`
+   * - `private_key`
+   * - `client_email`
    */
   credentialsJSON: string;
 
   /**
    * Existing GCS bucket. The service account of `credentialsJSON` needs to
    * have the following permission of this bucket:
-   * - roles/storage.objectCreator
-   * - roles/storage.objectViewer
+   * - `roles/storage.objectCreator`
+   * - `roles/storage.objectViewer`
    */
   bucketName: string;
 
   /**
    * The prefix to write media files.
-   * File structure after this prefix is managed by MediaManager
+   * File structure after this prefix is managed by {@link MediaManager}
    */
   prefix?: string;
 
@@ -134,6 +138,9 @@ export type MediaEntryIdentifier = {
  * Information needed to uniquely identify a file
  */
 export type MediaFileIdentifier = MediaEntryIdentifier & {
+  /**
+   * @see {@link VariantSetting.name}
+   */
   variant: string;
 };
 
