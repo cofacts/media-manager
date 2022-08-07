@@ -1,6 +1,7 @@
 # Cofacts Media Manager
 
 [![CI](https://github.com/cofacts/media-manager/actions/workflows/main.yml/badge.svg)](https://github.com/cofacts/media-manager/actions/workflows/main.yml) [![Coverage Status](https://coveralls.io/repos/github/cofacts/media-manager/badge.svg?branch=main)](https://coveralls.io/github/cofacts/media-manager?branch=main)
+[![npm](https://nodei.co/npm/@cofacts/media-manager.png?mini=true)](https://www.npmjs.com/package/@cofacts/media-manager)
 
 Cofactes Media Manager is a Node.JS API that provides the following functionality for images and other files:
 - Store files and return an unique identifier (Media Entry ID) for each unique file; duplicate files are ignored.
