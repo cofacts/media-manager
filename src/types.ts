@@ -88,7 +88,7 @@ export type MediaManagerOptions = {
   getVariantSettings?: GetVariantSettingsFn;
 };
 
-export type QueryOptions = {
+export interface QueryOptions {
   /**
    * The URL to the file to search for.
    * It is expected that the URL is:
@@ -97,7 +97,7 @@ export type QueryOptions = {
    * - has correct Content-Length header
    */
   url: string;
-};
+}
 
 export type InsertOptions = {
   /**
@@ -106,16 +106,16 @@ export type InsertOptions = {
   url: string;
 
   /**
-   * When upload succeeded, onUploadStop(null) will be called.
+   * When upload succeeded, `onUploadStop(null)` will be called.
    * By this time, returned {@link MediaEntry.getUrl} should be usable.
    *
-   * If upload fails, onUploadStop(err) will be called, passing the err returned by GCS NodeJS API.
-   * If the file already exist, onUploadStop(err) will also be called with an error.
+   * If upload fails, `onUploadStop(err)` will be called, passing the error returned by GCS NodeJS API.
+   * If the file already exist, `onUploadStop(err)` will also be called with an error.
    */
   onUploadStop?: (err: Error | null) => void;
 
   /**
-   * If given, getVariantSettings() settings in constructor is overridden.
+   * If given, `getVariantSettings()` settings in constructor is overridden.
    * Specifies variant settings for this specific insert operation.
    */
   getVariantSettings?: GetVariantSettingsFn;
@@ -155,7 +155,7 @@ export type GetVariantSettingsOptions = {
   size: number;
 };
 
-export type VariantSetting = {
+export interface VariantSetting {
   /** The name of variant. Maps to file name under the media entry directory. */
   name: string;
 
@@ -164,7 +164,7 @@ export type VariantSetting = {
 
   /** The content type of the transform output of this variant. */
   contentType: string;
-};
+}
 
 /**
  * Given info about the file to upload,
