@@ -55,7 +55,7 @@ export interface MediaEntry {
   getFile: (variant?: string) => File;
 }
 
-/** ID is the to-be ID if the file is being inserted into database. */
+/** ID is the to-be ID if the file is being stored in the storage. */
 export type QueryInfo = Pick<MediaEntry, 'id' | 'type'>;
 
 export type MediaManagerOptions = {
@@ -70,8 +70,10 @@ export type MediaManagerOptions = {
   /**
    * Existing GCS bucket. The service account of `credentialsJSON` needs to
    * have the following permission of this bucket:
-   * - `roles/storage.objectCreator`
-   * - `roles/storage.objectViewer`
+   * - `storage.objects.list`
+   * - `storage.objects.create`
+   * - `storage.objects.get`
+   * - `storage.objects.delete`
    */
   bucketName: string;
 
@@ -93,8 +95,8 @@ export interface QueryOptions {
    * The URL to the file to search for.
    * It is expected that the URL is:
    * - accessible
-   * - has correct Content-Type header
-   * - has correct Content-Length header
+   * - has correct `Content-Type` header
+   * - has correct `Content-Length` header
    */
   url: string;
 }
@@ -151,7 +153,7 @@ export type GetVariantSettingsOptions = {
   /** Original content type from url */
   contentType: string;
 
-  /** File size in byte, read from Content-Length */
+  /** File size in byte, read from `Content-Length` */
   size: number;
 };
 
@@ -168,6 +170,6 @@ export interface VariantSetting {
 
 /**
  * Given info about the file to upload,
- * returns the settings to the  available variants for the file.
+ * returns the settings to the available variants for the file.
  */
 export type GetVariantSettingsFn = (opt: GetVariantSettingsOptions) => VariantSetting[];
