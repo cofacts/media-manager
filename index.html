@@ -16,81 +16,84 @@
 </a>
 <p><a href="https://github.com/cofacts/media-manager/actions/workflows/main.yml"><img src="https://github.com/cofacts/media-manager/actions/workflows/main.yml/badge.svg" alt="CI"></a> <a href="https://coveralls.io/github/cofacts/media-manager?branch=main"><img src="https://coveralls.io/repos/github/cofacts/media-manager/badge.svg?branch=main" alt="Coverage Status"></a>
 <a href="https://www.npmjs.com/package/@cofacts/media-manager"><img src="https://nodei.co/npm/@cofacts/media-manager.png?mini=true" alt="npm"></a></p>
-<p>Cofactes Media Manager is a Node.JS API that provides the following functionality for images and other files:</p>
+<p>Cofacts Media Manager is a Node.JS API that provides the following functionality for images and other files:</p>
 <ul>
-<li>Store files and return an unique identifier (Media Entry ID) for each unique file; duplicate files are ignored.</li>
+<li>Store files and return a unique identifier (Media Entry ID) for each unique file; duplicate files are ignored.</li>
 <li>Search for a file with a query file.</li>
 <li>Return underlying Google Cloud Storage <code>File</code> object given the media entry ID.</li>
 <li>Pre-process and store as <a href="#variants-and-transformers">variants</a>.</li>
 </ul>
 
+<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+  <h2>Install</h2>
+</a>
+<p>Install cofacts/media-manager via npm:</p>
+<pre><code class="language-sh"><span class="hl-0">npm i @cofacts/media-manager</span>
+</code></pre>
+
 <a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
   <h2>Usage</h2>
 </a>
-<p>The code snippet below shows how to setup the connection Google Cloud Storage, and how to search for
+<p>The code snippet below shows how to set up the connection Google Cloud Storage, and how to search for
 a file in the bucket, and how to add new files to the bucket.</p>
-<pre><code class="language-js"><span class="hl-0">import</span><span class="hl-1"> </span><span class="hl-2">MediaManager</span><span class="hl-1"> </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-3">&#39;@cofacts/media-manager&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">// Setup</span><br/><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-6">manager</span><span class="hl-1"> = </span><span class="hl-5">new</span><span class="hl-1"> </span><span class="hl-7">MediaManager</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-4">// Google Cloud service account&#39;s JSON key, in string format.</span><br/><span class="hl-1">  </span><span class="hl-2">credentialsJSON:</span><span class="hl-1"> </span><span class="hl-3">&#39;{&quot;type&quot;: &quot;service_account&quot;, &quot;project_id&quot;: &quot;...&quot; ...}&#39;</span><span class="hl-1">,</span><br/><br/><span class="hl-1">  </span><span class="hl-4">// The Google Cloud Storage bucket name</span><br/><span class="hl-1">  </span><span class="hl-2">bucketName:</span><span class="hl-1"> </span><span class="hl-3">&#39;my-gcs-bucket&#39;</span><span class="hl-1">,</span><br/><br/><span class="hl-1">  </span><span class="hl-4">// The prefix of where files are put.</span><br/><span class="hl-1">  </span><span class="hl-4">// Trailing `/` is REQUIRED if you want files to be put in a &quot;directory&quot; on GCS web console. Otherwise, root directories will just have specified prefix in its front.</span><br/><span class="hl-1">  </span><span class="hl-4">// If not given, files will be placed right insight the bucket.</span><br/><span class="hl-1">  </span><span class="hl-2">prefix:</span><span class="hl-1"> </span><span class="hl-3">&#39;some-dir/&#39;</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-4">// Search</span><br/><span class="hl-5">const</span><span class="hl-1"> { </span><span class="hl-6">hits</span><span class="hl-1"> } = </span><span class="hl-0">await</span><span class="hl-1"> </span><span class="hl-2">manager</span><span class="hl-1">.</span><span class="hl-7">query</span><span class="hl-1">({</span><span class="hl-2">url:</span><span class="hl-1"> </span><span class="hl-3">&#39;https://url/of/file/to/search&#39;</span><span class="hl-1">});</span><br/><br/><span class="hl-4">// Upload and index</span><br/><span class="hl-5">const</span><span class="hl-1"> { </span><span class="hl-6">id</span><span class="hl-1">, </span><span class="hl-6">url</span><span class="hl-1"> } = </span><span class="hl-0">await</span><span class="hl-1"> </span><span class="hl-2">manager</span><span class="hl-1">.</span><span class="hl-7">insert</span><span class="hl-1">({</span><span class="hl-2">url:</span><span class="hl-1"> </span><span class="hl-3">&#39;https://url/of/file/to/store&#39;</span><span class="hl-1">});</span>
+<pre><code class="language-js"><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">MediaManager</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@cofacts/media-manager&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">// Setup</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">manager</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-7">MediaManager</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-4">// Google Cloud service account&#39;s JSON key, in string format.</span><br/><span class="hl-0">  </span><span class="hl-2">credentialsJSON:</span><span class="hl-0"> </span><span class="hl-3">&#39;{&quot;type&quot;: &quot;service_account&quot;, &quot;project_id&quot;: &quot;...&quot; ...}&#39;</span><span class="hl-0">,</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// The Google Cloud Storage bucket name</span><br/><span class="hl-0">  </span><span class="hl-2">bucketName:</span><span class="hl-0"> </span><span class="hl-3">&#39;my-gcs-bucket&#39;</span><span class="hl-0">,</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// The prefix of where files are put.</span><br/><span class="hl-0">  </span><span class="hl-4">// Trailing `/` is REQUIRED if you want files to be put in a &quot;directory&quot; on GCS web console. Otherwise, root directories will just have specified prefix in its front.</span><br/><span class="hl-0">  </span><span class="hl-4">// If not given, files will be placed right insight the bucket.</span><br/><span class="hl-0">  </span><span class="hl-2">prefix:</span><span class="hl-0"> </span><span class="hl-3">&#39;some-dir/&#39;</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-4">// Search</span><br/><span class="hl-5">const</span><span class="hl-0"> { </span><span class="hl-6">hits</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">manager</span><span class="hl-0">.</span><span class="hl-7">query</span><span class="hl-0">({</span><span class="hl-2">url:</span><span class="hl-0"> </span><span class="hl-3">&#39;https://url/of/file/to/search&#39;</span><span class="hl-0">});</span><br/><br/><span class="hl-4">// Upload and index</span><br/><span class="hl-5">const</span><span class="hl-0"> { </span><span class="hl-6">id</span><span class="hl-0">, </span><span class="hl-6">url</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">manager</span><span class="hl-0">.</span><span class="hl-7">insert</span><span class="hl-0">({</span><span class="hl-2">url:</span><span class="hl-0"> </span><span class="hl-3">&#39;https://url/of/file/to/store&#39;</span><span class="hl-0">});</span>
 </code></pre>
 <p>On the GCS bucket, the files will be organized in the following tree hierarchy:</p>
-<pre><code><span class="hl-2">some</span><span class="hl-1">-</span><span class="hl-2">dir</span><span class="hl-1">/</span><br/><span class="hl-1">  </span><span class="hl-2">image</span><span class="hl-1">/</span><br/><span class="hl-1">    &lt;</span><span class="hl-2">search</span><span class="hl-1">-</span><span class="hl-2">hash</span><span class="hl-1">&gt;/</span><br/><span class="hl-1">      &lt;</span><span class="hl-2">id</span><span class="hl-1">-</span><span class="hl-2">hash</span><span class="hl-1">&gt;/</span><br/><span class="hl-1">        </span><span class="hl-2">original</span><span class="hl-1">.</span><span class="hl-2">xxx</span><br/><span class="hl-1">  </span><span class="hl-2">file</span><span class="hl-1">/</span><br/><span class="hl-1">    &lt;</span><span class="hl-2">id</span><span class="hl-1">-</span><span class="hl-2">hash</span><span class="hl-1">&gt;/</span><br/><span class="hl-1">      </span><span class="hl-2">original</span><span class="hl-1">.</span><span class="hl-2">xxx</span>
+<pre><code><span class="hl-2">some</span><span class="hl-0">-</span><span class="hl-2">dir</span><span class="hl-0">/</span><br/><span class="hl-0">  </span><span class="hl-2">image</span><span class="hl-0">/</span><br/><span class="hl-0">    &lt;</span><span class="hl-2">search</span><span class="hl-0">-</span><span class="hl-2">hash</span><span class="hl-0">&gt;/</span><br/><span class="hl-0">      &lt;</span><span class="hl-2">id</span><span class="hl-0">-</span><span class="hl-2">hash</span><span class="hl-0">&gt;/</span><br/><span class="hl-0">        </span><span class="hl-2">original</span><br/><span class="hl-0">  </span><span class="hl-2">file</span><span class="hl-0">/</span><br/><span class="hl-0">    &lt;</span><span class="hl-2">id</span><span class="hl-0">-</span><span class="hl-2">hash</span><span class="hl-0">&gt;/</span><br/><span class="hl-0">      </span><span class="hl-2">original</span>
 </code></pre>
-<p>It is designed so that Media Manager can retrieve files using path prefix.</p>
+<p>It is designed so that Media Manager can retrieve files using path prefix. You may refer to <a href="https://github.com/cofacts/media-manager/wiki/Media-Manager-Design">the wiki</a> for the design choice.</p>
+
+<a href="#variants-and-transformers" id="variants-and-transformers" style="color: inherit; text-decoration: none;">
+  <h3>Variants and transformers</h3>
+</a>
+<blockquote>
+<p>Reference: <a href="https://cofacts.github.io/media-manager/types/GetVariantSettingsFn.html">GetVariantSettingsFn</a></p>
+</blockquote>
+<p>You can define multiple variants for each uploaded file by providing <code>getVaraintSettings</code> method to the <code>MediaManager</code> constructor, or when calling <code>mediaManager.insert()</code>.</p>
+<p>Your <code>getVaraintSettings</code> should return a list of <a href="https://cofacts.github.io/media-manager/interfaces/VariantSetting.html"><code>VariantSetting</code></a> objects. When you call <code>mediaManager.insert()</code>, Media manager will process on-the-fly and emit one file on GCS for each <code>VariantSetting</code> returned by <code>getVaraintSettings</code>.</p>
+<p>We provide a <a href="https://cofacts.github.io/media-manager/functions/variants.original.html"><code>variant.original</code> factory function</a> that generates just one <code>VariantSetting</code> object that does not transform the data, so that the original file is stored to GCS. This is also used in <a href="https://cofacts.github.io/media-manager/functions/variants.defaultGetVariantSettings.html">the default <code>getVariantSettings</code></a>.</p>
+<pre><code class="language-js"><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">MediaManager</span><span class="hl-0">, { </span><span class="hl-2">variants</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@cofacts/media-manager&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">sharp</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;sharp&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">// Setup</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">manager</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-7">MediaManager</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-2">credentialsJSON:</span><span class="hl-0"> </span><span class="hl-3">&#39;{&quot;type&quot;: &quot;service_account&quot;, &quot;project_id&quot;: &quot;...&quot; ...}&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">bucketName:</span><span class="hl-0"> </span><span class="hl-3">&#39;my-gcs-bucket&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-2">prefix:</span><span class="hl-0"> </span><span class="hl-3">&#39;some-dir/&#39;</span><span class="hl-0">,</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// Example:</span><br/><span class="hl-0">  </span><span class="hl-4">// 1. store 1 scaled image and the original file for images</span><br/><span class="hl-0">  </span><span class="hl-4">// 2. store just the original file for other files</span><br/><span class="hl-0">  </span><span class="hl-4">//</span><br/><span class="hl-0">  </span><span class="hl-7">getVariantSettings</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">type</span><span class="hl-0">, </span><span class="hl-4">// &#39;image&#39; | &#39;audio&#39; | &#39;video&#39; | &#39;file&#39;</span><br/><span class="hl-0">    </span><span class="hl-2">contentType</span><span class="hl-0">,</span><br/><span class="hl-0">  }) {</span><br/><span class="hl-0">    </span><span class="hl-1">if</span><span class="hl-0">(</span><span class="hl-2">type</span><span class="hl-0"> === </span><span class="hl-3">&#39;image&#39;</span><span class="hl-0">) </span><span class="hl-1">return</span><span class="hl-0"> [</span><br/><span class="hl-0">      </span><span class="hl-4">// Emits the original uplaoded file to GCS</span><br/><span class="hl-0">      </span><span class="hl-2">variants</span><span class="hl-0">.</span><span class="hl-7">original</span><span class="hl-0">(</span><span class="hl-2">contentType</span><span class="hl-0">),</span><br/><br/><span class="hl-0">      </span><span class="hl-4">// Emits a 100-px wide webp image</span><br/><span class="hl-0">      {</span><br/><span class="hl-0">        </span><span class="hl-2">name:</span><span class="hl-0"> </span><span class="hl-3">&#39;thumbnail&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-2">contentType:</span><span class="hl-0"> </span><span class="hl-3">&#39;image/webp&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-2">transform:</span><span class="hl-0"> </span><span class="hl-7">sharp</span><span class="hl-0">().</span><span class="hl-7">resize</span><span class="hl-0">(</span><span class="hl-8">100</span><span class="hl-0">).</span><span class="hl-7">webp</span><span class="hl-0">(),</span><br/><span class="hl-0">      }</span><br/><span class="hl-0">    ];</span><br/><br/><span class="hl-0">    </span><span class="hl-1">return</span><span class="hl-0"> [</span><br/><span class="hl-0">      </span><span class="hl-4">// Emits the original uplaoded file to GCS</span><br/><span class="hl-0">      </span><span class="hl-2">variants</span><span class="hl-0">.</span><span class="hl-7">origina</span><span class="hl-0">(</span><span class="hl-2">contentType</span><span class="hl-0">),</span><br/><span class="hl-0">    ]</span><br/><span class="hl-0">  }</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-4">// Get the GCS file object for the &quot;thumbnail&quot; variant</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">file</span><span class="hl-0"> = </span><span class="hl-2">manager</span><span class="hl-0">.</span><span class="hl-7">getFile</span><span class="hl-0">(</span><span class="hl-3">&#39;&lt;MediaEntry ID&gt;&#39;</span><span class="hl-0">, </span><span class="hl-3">&#39;thumbnail&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-4">// or</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">mediaEntry</span><span class="hl-0"> = </span><span class="hl-2">manager</span><span class="hl-0">.</span><span class="hl-7">get</span><span class="hl-0">(</span><span class="hl-3">&#39;&lt;MediaEntry ID&gt;&#39;</span><span class="hl-0">);</span><br/><span class="hl-2">mediaEntry</span><span class="hl-0">.</span><span class="hl-7">get</span><span class="hl-0">(</span><span class="hl-3">&#39;thumbnail&#39;</span><span class="hl-0">); </span><span class="hl-4">// Throws if `thumbnail` variant does not exist on GCS</span><br/>
+</code></pre>
+<p>On the GCS bucket, the files will be organized in the following tree hierarchy:</p>
+<pre><code><span class="hl-2">some</span><span class="hl-0">-</span><span class="hl-2">dir</span><span class="hl-0">/</span><br/><span class="hl-0">  </span><span class="hl-2">image</span><span class="hl-0">/</span><br/><span class="hl-0">    &lt;</span><span class="hl-2">search</span><span class="hl-0">-</span><span class="hl-2">hash</span><span class="hl-0">&gt;/</span><br/><span class="hl-0">      &lt;</span><span class="hl-2">id</span><span class="hl-0">-</span><span class="hl-2">hash</span><span class="hl-0">&gt;/</span><br/><span class="hl-0">        </span><span class="hl-2">original</span><br/><span class="hl-0">        </span><span class="hl-2">thumbnail</span><br/><span class="hl-0">  </span><span class="hl-2">file</span><span class="hl-0">/</span><br/><span class="hl-0">    &lt;</span><span class="hl-2">id</span><span class="hl-0">-</span><span class="hl-2">hash</span><span class="hl-0">&gt;/</span><br/><span class="hl-0">      </span><span class="hl-2">original</span>
+</code></pre>
 
 <a href="#media-entry-on-gcs" id="media-entry-on-gcs" style="color: inherit; text-decoration: none;">
   <h3>Media entry on GCS</h3>
 </a>
-<p>Each uploaded file maps to a <em>media entry</em> on Media Manager. On Google Cloud Storage, it maps to a
+<p>Even though you can browse the file in your bucket directly on GCS, you don&#39;t have to traverse the bucket by yourself. Instead, you should access the files and their variants by their corresponding <em>media entry</em>.</p>
+<p>Each uploaded file maps to a <a href="https://cofacts.github.io/media-manager/interfaces/MediaEntry.html">media entry</a> on Media Manager. On Google Cloud Storage, it maps to a
 directory that hosts different <a href="#variants-and-transformers">variant files</a>.</p>
-<p>By default there is only one variant, <code>original</code>, representing the originally uploaded file; all bytes are stored as-is without any pre-processing.</p>
-<p>Each media entry has a unique identifier (media entry ID). For images they are like: <code>image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8</code>. For other files it look may look like <code>file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU</code>. The media entry ID is always URL-safe.</p>
-<p>Media manager also provides methods like <code>mediaManager.get()</code> so that you can get a media entry by its ID.</p>
+<p>By default, there is only one variant, <code>original</code>, representing the originally uploaded file; all bytes are stored as-is without any pre-processing.</p>
+<p>Each media entry has a unique identifier (media entry ID). For images, they are like: <code>image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8</code>. For other files it may look like <code>file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU</code>. The media entry ID is always URL-safe.</p>
+<p>Media manager also provides methods like <code>mediaManager.get()</code> so that you can get a media entry by its ID. Through the media entry, you can either get its public URL on GCS, or directly get a <a href="https://googleapis.dev/nodejs/storage/latest/File.html">GCS file object</a> if you want further control.</p>
 
 <a href="#search-for-files-mediamanagerquery" id="search-for-files-mediamanagerquery" style="color: inherit; text-decoration: none;">
   <h3>Search for files: <code>mediaManager.query()</code></h3>
 </a>
+<blockquote>
+<p>Reference: <a href="https://cofacts.github.io/media-manager/classes/MediaManager.html#query">MediaManager#query</a></p>
+</blockquote>
 <p><code>mediaManager.query()</code> takes the URL of the query image as the input, and returns the search result.</p>
-<p>The search result may multiple search hits for similar images; one hit (exact match) for other formats.</p>
+<p>The search result may contain multiple search hits for similar images. There is at most one hit (exact match) for other formats.</p>
 <p>For how image similarity works, please refer to <a href="https://github.com/cofacts/media-manager/wiki/Media-Manager-Design">the wiki</a>.</p>
 
 <a href="#upload-files-mediamanagerinsert" id="upload-files-mediamanagerinsert" style="color: inherit; text-decoration: none;">
   <h3>Upload files: <code>mediaManager.insert()</code></h3>
 </a>
+<blockquote>
+<p>Reference: <a href="https://cofacts.github.io/media-manager/classes/MediaManager.html#insert">MediaManager#insert</a></p>
+</blockquote>
 <p>This method will upload file of the given URL to Google Cloud Storage.</p>
-<p>Files with identical or near duplicate image content will produce the same identifier, so there will be no duplicates on your GCS bucket.</p>
+<p>Files with identical or near duplicate image content will produce the same media entry ID, so there will be no duplicates on your GCS bucket.</p>
 <p><code>insert()</code> resolves as soon as all data in <code>MediaEntry</code> is resolved -- which is the time the unique identifier <code>id</code> is generated from actual file content.</p>
-<p>By the time <code>insert()</code> resolves, it is possible that files are still being uplaoded to GCS. When upload succeeded, <code>onUploadStop(null)</code> will be called. If upload fails or the file already exists, <code>onUploadStop(err)</code> will be called.</p>
-
-<a href="#variants-and-transformers" id="variants-and-transformers" style="color: inherit; text-decoration: none;">
-  <h3>Variants and transformers</h3>
-</a>
-<p>TODO:</p>
-<ul>
-<li>Upload is processed in Node.JS streams</li>
-<li>How to setup variants and write transformers</li>
-</ul>
+<p>By the time <code>insert()</code> resolves, it is possible that files are still being uploaded to GCS. When upload succeeds, <code>onUploadStop(null)</code> will be called. If upload fails or the file already exists, <code>onUploadStop(err)</code> will be called.</p>
 
 <a href="#api-reference" id="api-reference" style="color: inherit; text-decoration: none;">
   <h2>API Reference</h2>
 </a>
-<p>TBA</p>
-
-<a href="#install" id="install" style="color: inherit; text-decoration: none;">
-  <h2>Install</h2>
-</a>
-<p>Install cofacts/media-manager via npm:</p>
-<pre><code><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-2">i</span><span class="hl-1"> @</span><span class="hl-2">cofacts</span><span class="hl-1">/</span><span class="hl-2">media</span><span class="hl-1">-</span><span class="hl-2">manager</span>
-</code></pre>
-
-<a href="#service-account-permission" id="service-account-permission" style="color: inherit; text-decoration: none;">
-  <h2>Service account permission</h2>
-</a>
-<p>The service account should have the following <a href="https://cloud.google.com/storage/docs/access-control/iam-roles">permissions</a> to the bucket:</p>
-<ul>
-<li><code>storage.objects.list</code></li>
-<li><code>storage.objects.create</code></li>
-<li><code>storage.objects.get</code></li>
-<li><code>storage.objects.delete</code></li>
-</ul>
+<p>The documentation of <code>MediaManager</code>&#39;s all methods and arguments are available at: <a href="https://cofacts.github.io/media-manager/classes/MediaManager.html">https://cofacts.github.io/media-manager/classes/MediaManager.html</a>.</p>
+<p>For the detailed requirements of the Google Cloud Storage bucket and service account, please refer to <a href="https://cofacts.github.io/media-manager/types/MediaManagerOptions.html">the documentation of <code>MediaManager</code>&#39;s constructor arguments</a>.</p>
 </div></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
