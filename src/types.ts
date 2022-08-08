@@ -48,18 +48,27 @@ export interface MediaEntry {
   /** Variants that exist on GCS for this media entry */
   variants: string[];
 
-  /** Variant file's public URL. Defaults to get original variant. */
+  /**
+   * Variant file's public URL. Throws if the provided variant does not exist on GCS.
+   *
+   * @param variant - The name of the variant. Defaults to `original` if not provided.
+   * */
   getUrl: (variant?: string) => string;
 
-  /** Variant file's GCS File object. Defaults to get original variant. */
+  /**
+   * Returns the variant file's [GCS `File`](https://googleapis.dev/nodejs/storage/latest/File.html).
+   * Throws if the provided variant does not exist on GCS.
+   *
+   * @param variant - The name of the variant. Defaults to `original` if not provided.
+   */
   getFile: (variant?: string) => File;
 }
 
-/** ID is the to-be ID if the file is being inserted into database. */
+/** ID is the to-be ID if the file is being stored in the storage. */
 export type QueryInfo = Pick<MediaEntry, 'id' | 'type'>;
 
 export type MediaManagerOptions = {
-  /** Google cloud credentail JSON content of a service account.
+  /** Google cloud credential JSON content of a service account.
    * Must include keys:
    * - `project_id`
    * - `private_key`
@@ -70,8 +79,10 @@ export type MediaManagerOptions = {
   /**
    * Existing GCS bucket. The service account of `credentialsJSON` needs to
    * have the following permission of this bucket:
-   * - `roles/storage.objectCreator`
-   * - `roles/storage.objectViewer`
+   * - `storage.objects.list`
+   * - `storage.objects.create`
+   * - `storage.objects.get`
+   * - `storage.objects.delete`
    */
   bucketName: string;
 
@@ -88,16 +99,16 @@ export type MediaManagerOptions = {
   getVariantSettings?: GetVariantSettingsFn;
 };
 
-export type QueryOptions = {
+export interface QueryOptions {
   /**
    * The URL to the file to search for.
    * It is expected that the URL is:
    * - accessible
-   * - has correct Content-Type header
-   * - has correct Content-Length header
+   * - has correct `Content-Type` header
+   * - has correct `Content-Length` header
    */
   url: string;
-};
+}
 
 export type InsertOptions = {
   /**
@@ -106,16 +117,16 @@ export type InsertOptions = {
   url: string;
 
   /**
-   * When upload succeeded, onUploadStop(null) will be called.
+   * When upload succeeds, `onUploadStop(null)` will be called.
    * By this time, returned {@link MediaEntry.getUrl} should be usable.
    *
-   * If upload fails, onUploadStop(err) will be called, passing the err returned by GCS NodeJS API.
-   * If the file already exist, onUploadStop(err) will also be called with an error.
+   * If upload fails, `onUploadStop(err)` will be called, passing the error returned by GCS NodeJS SDK.
+   * If the file already exist, `onUploadStop(err)` will also be called with an error.
    */
   onUploadStop?: (err: Error | null) => void;
 
   /**
-   * If given, getVariantSettings() settings in constructor is overridden.
+   * If given, `getVariantSettings()` settings in constructor is overridden.
    * Specifies variant settings for this specific insert operation.
    */
   getVariantSettings?: GetVariantSettingsFn;
@@ -151,11 +162,11 @@ export type GetVariantSettingsOptions = {
   /** Original content type from url */
   contentType: string;
 
-  /** File size in byte, read from Content-Length */
+  /** File size in byte, read from `Content-Length` */
   size: number;
 };
 
-export type VariantSetting = {
+export interface VariantSetting {
   /** The name of variant. Maps to file name under the media entry directory. */
   name: string;
 
@@ -164,10 +175,15 @@ export type VariantSetting = {
 
   /** The content type of the transform output of this variant. */
   contentType: string;
-};
+}
 
 /**
  * Given info about the file to upload,
- * returns the settings to the  available variants for the file.
+ * returns the settings to the available variants for the file.
+ *
+ * This function is invoked when {@link MediaManager.insert} is called, after retrieving the HTTP
+ * header of the file URL.
+ *
+ * Each `VariantSetting` in the list will map to one file on GCS.
  */
 export type GetVariantSettingsFn = (opt: GetVariantSettingsOptions) => VariantSetting[];
