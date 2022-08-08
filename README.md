@@ -3,8 +3,8 @@
 [![CI](https://github.com/cofacts/media-manager/actions/workflows/main.yml/badge.svg)](https://github.com/cofacts/media-manager/actions/workflows/main.yml) [![Coverage Status](https://coveralls.io/repos/github/cofacts/media-manager/badge.svg?branch=main)](https://coveralls.io/github/cofacts/media-manager?branch=main)
 [![npm](https://nodei.co/npm/@cofacts/media-manager.png?mini=true)](https://www.npmjs.com/package/@cofacts/media-manager)
 
-Cofactes Media Manager is a Node.JS API that provides the following functionality for images and other files:
-- Store files and return an unique identifier (Media Entry ID) for each unique file; duplicate files are ignored.
+Cofacts Media Manager is a Node.JS API that provides the following functionality for images and other files:
+- Store files and return a unique identifier (Media Entry ID) for each unique file; duplicate files are ignored.
 - Search for a file with a query file.
 - Return underlying Google Cloud Storage `File` object given the media entry ID.
 - Pre-process and store as [variants](#variants-and-transformers).
@@ -19,7 +19,7 @@ npm i @cofacts/media-manager
 
 ## Usage
 
-The code snippet below shows how to setup the connection Google Cloud Storage, and how to search for
+The code snippet below shows how to set up the connection Google Cloud Storage, and how to search for
 a file in the bucket, and how to add new files to the bucket.
 
 ```js
@@ -133,14 +133,14 @@ some-dir/
 
 ### Media entry on GCS
 
-Even though you can browse the file in your bucket directly on GCS, you don't have to traverse the bucket by yourself. Instead, you should access the files and their variants by their corresponding *media entriy*.
+Even though you can browse the file in your bucket directly on GCS, you don't have to traverse the bucket by yourself. Instead, you should access the files and their variants by their corresponding *media entry*.
 
 Each uploaded file maps to a [media entry](https://cofacts.github.io/media-manager/interfaces/MediaEntry.html) on Media Manager. On Google Cloud Storage, it maps to a
 directory that hosts different [variant files](#variants-and-transformers).
 
-By default there is only one variant, `original`, representing the originally uploaded file; all bytes are stored as-is without any pre-processing.
+By default, there is only one variant, `original`, representing the originally uploaded file; all bytes are stored as-is without any pre-processing.
 
-Each media entry has a unique identifier (media entry ID). For images they are like: `image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8`. For other files it look may look like `file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU`. The media entry ID is always URL-safe.
+Each media entry has a unique identifier (media entry ID). For images, they are like: `image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8`. For other files it may look like `file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU`. The media entry ID is always URL-safe.
 
 Media manager also provides methods like `mediaManager.get()` so that you can get a media entry by its ID. Through the media entry, you can either get its public URL on GCS, or directly get a [GCS file object](https://googleapis.dev/nodejs/storage/latest/File.html) if you want further control.
 
@@ -150,7 +150,7 @@ Media manager also provides methods like `mediaManager.get()` so that you can ge
 
 `mediaManager.query()` takes the URL of the query image as the input, and returns the search result.
 
-The search result may multiple search hits for similar images; one hit (exact match) for other formats.
+The search result may contain multiple search hits for similar images. There is at most one hit (exact match) for other formats.
 
 For how image similarity works, please refer to [the wiki](https://github.com/cofacts/media-manager/wiki/Media-Manager-Design).
 
@@ -160,11 +160,11 @@ For how image similarity works, please refer to [the wiki](https://github.com/co
 
 This method will upload file of the given URL to Google Cloud Storage.
 
-Files with identical or near duplicate image content will produce the same identifier, so there will be no duplicates on your GCS bucket.
+Files with identical or near duplicate image content will produce the same media entry ID, so there will be no duplicates on your GCS bucket.
 
 `insert()` resolves as soon as all data in `MediaEntry` is resolved -- which is the time the unique identifier `id` is generated from actual file content.
 
-By the time `insert()` resolves, it is possible that files are still being uplaoded to GCS. When upload succeeded, `onUploadStop(null)` will be called. If upload fails or the file already exists, `onUploadStop(err)` will be called.
+By the time `insert()` resolves, it is possible that files are still being uploaded to GCS. When upload succeeds, `onUploadStop(null)` will be called. If upload fails or the file already exists, `onUploadStop(err)` will be called.
 
 ## API Reference
 

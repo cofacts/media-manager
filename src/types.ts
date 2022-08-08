@@ -117,10 +117,10 @@ export type InsertOptions = {
   url: string;
 
   /**
-   * When upload succeeded, `onUploadStop(null)` will be called.
+   * When upload succeeds, `onUploadStop(null)` will be called.
    * By this time, returned {@link MediaEntry.getUrl} should be usable.
    *
-   * If upload fails, `onUploadStop(err)` will be called, passing the error returned by GCS NodeJS API.
+   * If upload fails, `onUploadStop(err)` will be called, passing the error returned by GCS NodeJS SDK.
    * If the file already exist, `onUploadStop(err)` will also be called with an error.
    */
   onUploadStop?: (err: Error | null) => void;
