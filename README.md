@@ -9,6 +9,14 @@ Cofactes Media Manager is a Node.JS API that provides the following functionalit
 - Return underlying Google Cloud Storage `File` object given the media entry ID.
 - Pre-process and store as [variants](#variants-and-transformers).
 
+## Install
+
+Install cofacts/media-manager via npm:
+
+```sh
+npm i @cofacts/media-manager
+```
+
 ## Usage
 
 The code snippet below shows how to setup the connection Google Cloud Storage, and how to search for
@@ -45,26 +53,94 @@ some-dir/
   image/
     <search-hash>/
       <id-hash>/
-        original.xxx
+        original
   file/
     <id-hash>/
-      original.xxx
+      original
 ```
 
 It is designed so that Media Manager can retrieve files using path prefix.
 
+### Variants and transformers
+
+> Reference: [GetVariantSettingsFn](https://cofacts.github.io/media-manager/types/GetVariantSettingsFn.html)
+
+You can define multiple variants for each uploaded file by providing `getVaraintSettings` method to the `MediaManager` constructor, or when calling `mediaManager.insert()`.
+
+The specified `getVaraintSettings` will be called when `mediaManager.insert()` is called, after retrieving the HTTP header of the file URL.
+
+Your `getVaraintSettings` should return a list of [`VariantSetting`](https://cofacts.github.io/media-manager/interfaces/VariantSetting.html) objects. Each `VariantSetting` in the list will map to one file on GCS.
+
+We provides a [`variant.original` factory function](https://cofacts.github.io/media-manager/functions/variants.original.html) that generates just one `VariantSetting` object with identity stream, which means that the file will be stored to the storage as-is. This is also used in [the default `getVariantSettings`](https://cofacts.github.io/media-manager/functions/variants.defaultGetVariantSettings.html).
+
+```js
+import MediaManager, { variants } from '@cofacts/media-manager';
+import sharp from 'sharp';
+
+// Setup
+const manager = new MediaManager({
+  credentialsJSON: '{"type": "service_account", "project_id": "..." ...}',
+  bucketName: 'my-gcs-bucket',
+  prefix: 'some-dir/',
+
+  // Example:
+  // 1. store 1 scaled image and the original file for images
+  // 2. store just the original file for other files
+  //
+  getVariantSettings({
+    type, // 'image' | 'audio' | 'video' | 'file'
+    contentType,
+  }) {
+    if(type === 'image') return [
+      // Emits the original uplaoded file to GCS
+      variants.original(contentType),
+
+      // Emits a 100-px wide webp image
+      {
+        name: 'thumbnail',
+        contentType: 'image/webp',
+        transform: sharp().resize(100).webp(),
+      }
+    ];
+
+    return [
+      // Emits the original uplaoded file to GCS
+      variants.origina(contentType),
+    ]
+  }
+});
+```
+
+On the GCS bucket, the files will be organized in the following tree hierarchy:
+
+```
+some-dir/
+  image/
+    <search-hash>/
+      <id-hash>/
+        original
+        thumbnail
+  file/
+    <id-hash>/
+      original
+```
+
 ### Media entry on GCS
 
-Each uploaded file maps to a *media entry* on Media Manager. On Google Cloud Storage, it maps to a
+Even though you can browse the file in your bucket directly on GCS, you don't have to traverse the bucket by yourself. Instead, you should access the files and their variants by their corresponding *media entriy*.
+
+Each uploaded file maps to a [media entry](https://cofacts.github.io/media-manager/interfaces/MediaEntry.html) on Media Manager. On Google Cloud Storage, it maps to a
 directory that hosts different [variant files](#variants-and-transformers).
 
 By default there is only one variant, `original`, representing the originally uploaded file; all bytes are stored as-is without any pre-processing.
 
 Each media entry has a unique identifier (media entry ID). For images they are like: `image.vDph4g.__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8`. For other files it look may look like `file.Dmqp3Bl7QD7dodKFpPLZss1ez1ef8CHg3oy9M7qndAU`. The media entry ID is always URL-safe.
 
-Media manager also provides methods like `mediaManager.get()` so that you can get a media entry by its ID.
+Media manager also provides methods like `mediaManager.get()` so that you can get a media entry by its ID. Through the media entry, you can either get its public URL on GCS, or directly get a [GCS file object](https://googleapis.dev/nodejs/storage/latest/File.html) if you want further control.
 
 ### Search for files: `mediaManager.query()`
+
+> Reference: [MediaManager#query](https://cofacts.github.io/media-manager/classes/MediaManager.html#query)
 
 `mediaManager.query()` takes the URL of the query image as the input, and returns the search result.
 
@@ -74,6 +150,8 @@ For how image similarity works, please refer to [the wiki](https://github.com/co
 
 ### Upload files: `mediaManager.insert()`
 
+> Reference: [MediaManager#query](https://cofacts.github.io/media-manager/classes/MediaManager.html#query)
+
 This method will upload file of the given URL to Google Cloud Storage.
 
 Files with identical or near duplicate image content will produce the same identifier, so there will be no duplicates on your GCS bucket.
@@ -82,28 +160,9 @@ Files with identical or near duplicate image content will produce the same ident
 
 By the time `insert()` resolves, it is possible that files are still being uplaoded to GCS. When upload succeeded, `onUploadStop(null)` will be called. If upload fails or the file already exists, `onUploadStop(err)` will be called.
 
-### Variants and transformers
-
-TODO:
-- Upload is processed in Node.JS streams
-- How to setup variants and write transformers
-
 ## API Reference
 
-TBA
+The documentation of `MediaManager`'s all methods and arguments are available at: https://cofacts.github.io/media-manager/classes/MediaManager.html.
 
-## Install
+For the detailed requirements of the Google Cloud Storage bucket and service account, please refer to [the documentation of `MediaManager`'s constructor arguments](https://cofacts.github.io/media-manager/types/MediaManagerOptions.html).
 
-Install cofacts/media-manager via npm:
-
-```
-npm i @cofacts/media-manager
-```
-
-## Service account permission
-
-The service account should have the following [permissions](https://cloud.google.com/storage/docs/access-control/iam-roles) to the bucket:
-- `storage.objects.list`
-- `storage.objects.create`
-- `storage.objects.get`
-- `storage.objects.delete`
