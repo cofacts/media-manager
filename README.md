@@ -59,7 +59,7 @@ some-dir/
       original
 ```
 
-It is designed so that Media Manager can retrieve files using path prefix.
+It is designed so that Media Manager can retrieve files using path prefix. You may refer to [the wiki](https://github.com/cofacts/media-manager/wiki/Media-Manager-Design) for the design choice.
 
 ### Variants and transformers
 
@@ -67,9 +67,9 @@ It is designed so that Media Manager can retrieve files using path prefix.
 
 You can define multiple variants for each uploaded file by providing `getVaraintSettings` method to the `MediaManager` constructor, or when calling `mediaManager.insert()`.
 
-Your `getVaraintSettings` should return a list of [`VariantSetting`](https://cofacts.github.io/media-manager/interfaces/VariantSetting.html) objects. Each `VariantSetting` in the list will map to one file on GCS.
+Your `getVaraintSettings` should return a list of [`VariantSetting`](https://cofacts.github.io/media-manager/interfaces/VariantSetting.html) objects. When you call `mediaManager.insert()`, Media manager will process on-the-fly and emit one file on GCS for each `VariantSetting` returned by `getVaraintSettings`.
 
-We provides a [`variant.original` factory function](https://cofacts.github.io/media-manager/functions/variants.original.html) that generates just one `VariantSetting` object with identity stream, which means that the file will be stored to the storage as-is. This is also used in [the default `getVariantSettings`](https://cofacts.github.io/media-manager/functions/variants.defaultGetVariantSettings.html).
+We provide a [`variant.original` factory function](https://cofacts.github.io/media-manager/functions/variants.original.html) that generates just one `VariantSetting` object that does not transform the data, so that the original file is stored to GCS. This is also used in [the default `getVariantSettings`](https://cofacts.github.io/media-manager/functions/variants.defaultGetVariantSettings.html).
 
 ```js
 import MediaManager, { variants } from '@cofacts/media-manager';
@@ -107,6 +107,14 @@ const manager = new MediaManager({
     ]
   }
 });
+
+// Get the GCS file object for the "thumbnail" variant
+const file = manager.getFile('<MediaEntry ID>', 'thumbnail');
+
+// or
+const mediaEntry = manager.get('<MediaEntry ID>');
+mediaEntry.get('thumbnail'); // Throws if `thumbnail` variant does not exist on GCS
+
 ```
 
 On the GCS bucket, the files will be organized in the following tree hierarchy:
