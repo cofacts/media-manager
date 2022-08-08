@@ -236,9 +236,14 @@ class MediaManager {
   }
 
   /**
+   * Returns the [GCS `File`](https://googleapis.dev/nodejs/storage/latest/File.html) for the specified
+   * `id` and `variant`.
+   *
+   * Note that this API does not check if the file actually exist on GCS; you may
+   * use the [`exists` method provided by GCS File](https://googleapis.dev/nodejs/storage/latest/File.html#exists) to check by yourself.
+   *
    * @param id - `id` in {@link MediaEntry.id MediaEntry}
    * @param variant - Maps to {@link VariantSetting.name}. Defaults to `original`.
-   * @returns GCS File object. Note that this API does not test if the file exists on GCS.
    */
   getFile(id: string, variant: string | undefined = DEFAULT_ORIGINAL_VARIANT_NAME): File {
     return this.bucket.file(this.genFileName({ ...this.parseId(id), variant }));

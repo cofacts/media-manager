@@ -48,10 +48,19 @@ export interface MediaEntry {
   /** Variants that exist on GCS for this media entry */
   variants: string[];
 
-  /** Variant file's public URL. Defaults to get original variant. */
+  /**
+   * Variant file's public URL. Throws if the provided variant does not exist on GCS.
+   *
+   * @param variant - The name of the variant. Defaults to `original` if not provided.
+   * */
   getUrl: (variant?: string) => string;
 
-  /** Variant file's GCS File object. Defaults to get original variant. */
+  /**
+   * Returns the variant file's [GCS `File`](https://googleapis.dev/nodejs/storage/latest/File.html).
+   * Throws if the provided variant does not exist on GCS.
+   *
+   * @param variant - The name of the variant. Defaults to `original` if not provided.
+   */
   getFile: (variant?: string) => File;
 }
 
@@ -59,7 +68,7 @@ export interface MediaEntry {
 export type QueryInfo = Pick<MediaEntry, 'id' | 'type'>;
 
 export type MediaManagerOptions = {
-  /** Google cloud credentail JSON content of a service account.
+  /** Google cloud credential JSON content of a service account.
    * Must include keys:
    * - `project_id`
    * - `private_key`
@@ -171,5 +180,10 @@ export interface VariantSetting {
 /**
  * Given info about the file to upload,
  * returns the settings to the available variants for the file.
+ *
+ * This function is invoked when {@link MediaManager.insert} is called, after retrieving the HTTP
+ * header of the file URL.
+ *
+ * Each `VariantSetting` in the list will map to one file on GCS.
  */
 export type GetVariantSettingsFn = (opt: GetVariantSettingsOptions) => VariantSetting[];

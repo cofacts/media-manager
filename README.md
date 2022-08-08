@@ -67,8 +67,6 @@ It is designed so that Media Manager can retrieve files using path prefix.
 
 You can define multiple variants for each uploaded file by providing `getVaraintSettings` method to the `MediaManager` constructor, or when calling `mediaManager.insert()`.
 
-The specified `getVaraintSettings` will be called when `mediaManager.insert()` is called, after retrieving the HTTP header of the file URL.
-
 Your `getVaraintSettings` should return a list of [`VariantSetting`](https://cofacts.github.io/media-manager/interfaces/VariantSetting.html) objects. Each `VariantSetting` in the list will map to one file on GCS.
 
 We provides a [`variant.original` factory function](https://cofacts.github.io/media-manager/functions/variants.original.html) that generates just one `VariantSetting` object with identity stream, which means that the file will be stored to the storage as-is. This is also used in [the default `getVariantSettings`](https://cofacts.github.io/media-manager/functions/variants.defaultGetVariantSettings.html).
@@ -150,7 +148,7 @@ For how image similarity works, please refer to [the wiki](https://github.com/co
 
 ### Upload files: `mediaManager.insert()`
 
-> Reference: [MediaManager#query](https://cofacts.github.io/media-manager/classes/MediaManager.html#query)
+> Reference: [MediaManager#insert](https://cofacts.github.io/media-manager/classes/MediaManager.html#insert)
 
 This method will upload file of the given URL to Google Cloud Storage.
 
