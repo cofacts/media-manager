@@ -99,20 +99,20 @@ export type MediaManagerOptions = {
   getVariantSettings?: GetVariantSettingsFn;
 };
 
-export interface QueryOptions {
-  /**
-   * The URL to the file to search for.
-   * It is expected that the URL is:
-   * - accessible
-   * - has correct `Content-Type` header
-   * - has correct `Content-Length` header
-   */
-  url: string;
-}
+/**
+ * Argument for {@link MediaManager.query}. Contains one of:
+ * - `url`: The URL to the file to search for.
+ *   It is expected that the URL is:
+ *   - accessible
+ *   - has correct `Content-Type` header
+ *   - has correct `Content-Length` header
+ * - `id`: The {@link MediaEntry.id} of an media entry, to look for similar media entries.
+ */
+export type QueryOptions = { url: string } | { id: string };
 
 export type InsertOptions = {
   /**
-   * @see {@link QueryOptions.url}
+   * @see {@link QueryOptions}'s url
    */
   url: string;
 
