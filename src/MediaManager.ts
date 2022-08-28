@@ -81,13 +81,22 @@ class MediaManager {
     throw new Error(`Incorrect ID: ${id}`);
   }
 
-  async query({ url }: QueryOptions): Promise<SearchResult> {
-    const { body, type, contentType, size } = await prepareStream({ url });
+  /**
+   * Generates media entry identifier for {@link MediaManager.query}'s argument.
+   */
+  private async processQueryOptions(opt: QueryOptions): Promise<MediaEntryIdentifier> {
+    if ('id' in opt) return this.parseId(opt.id);
 
+    const { body, type, contentType, size } = await prepareStream({ url: opt.url });
     const hashes =
       type === MediaType.image
         ? await getImageSearchHashes(body, size, contentType)
         : [await getFileIDHash(body)];
+    return { type, hashes };
+  }
+
+  async query(options: QueryOptions): Promise<SearchResult> {
+    const { type, hashes } = await this.processQueryOptions(options);
 
     // Only use first hash as search hash, no matter it's image or file
     const prefix = this.genMediaEntryName({ type, hashes: [hashes[0]] });
