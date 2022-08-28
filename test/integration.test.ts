@@ -215,5 +215,9 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
         },
       }
     `);
+
+    // Check if can search by ID; should be identical to queryResult
+    const queryResultById = await mediaManager.query({ id: queryResult.queryInfo.id });
+    expect(JSON.stringify(queryResultById)).toEqual(JSON.stringify(queryResult));
   }, 30000);
 }
