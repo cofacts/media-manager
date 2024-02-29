@@ -1,5 +1,5 @@
+import fetch from 'node-fetch';
 import { Bucket, Storage, File } from '@google-cloud/storage';
-import { pipeline } from 'stream/promises';
 import prepareStream from './lib/prepareStream';
 import { defaultGetVariantSettings, DEFAULT_ORIGINAL_VARIANT_NAME } from './lib/variants';
 import { getFileIDHash, getImageSearchHashes, base64urlHammingDist } from './lib/hashes';
@@ -160,12 +160,17 @@ class MediaManager {
     // Must not await this promise because we still need to pipe body to another writable stream
     // for hash calculation below
     const uploadPromise = Promise.all(
-      variantSettings.map(({ transform, contentType }, i) =>
-        pipeline(
-          body,
-          transform,
-          tempVariantFiles[i].createWriteStream({ contentType, gzip: 'auto' })
-        )
+      variantSettings.map(
+        async ({ transform, contentType }, i) =>
+          new Promise(async (resolve, reject) => {
+            // Initiate separate HTTP stream here, as each variant may consume the stream differently,
+            // or even ends before reading the whole file.
+            (await fetch(url)).body
+              .pipe(transform)
+              .pipe(tempVariantFiles[i].createWriteStream({ contentType, gzip: 'auto' }))
+              .on('finish', resolve)
+              .on('error', reject);
+          })
       )
     );
 
