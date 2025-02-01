@@ -72,8 +72,8 @@ export async function getImageSearchHashes(
         : fullBodyStream.pipe(
             sharpProcessors.reduce((sharp, processor) => processor(sharp), sharp())
           );
-    const chunks: Buffer[] = [];
-    stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+    const chunks: Uint8Array[] = [];
+    stream.on('data', (chunk: Uint8Array) => chunks.push(chunk));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
     stream.on('error', reject);
   });
