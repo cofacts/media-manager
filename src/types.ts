@@ -73,8 +73,10 @@ export type MediaManagerOptions = {
    * - `project_id`
    * - `private_key`
    * - `client_email`
+   *
+   * If not given, [Application Default Credential](https://cloud.google.com/docs/authentication/application-default-credentials) will be used.
    */
-  credentialsJSON: string;
+  credentialsJSON?: string;
 
   /**
    * Existing GCS bucket. The service account of `credentialsJSON` needs to
