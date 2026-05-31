@@ -30,6 +30,7 @@
   },
   "name": "@cofacts/media-manager",
   "author": "Cofacts message reporting chatbot and crowd-sourced fact-checking community (「Cofacts 真的假的」訊息回報機器人與查證協作社群)",
+  "repository": "github:cofacts/media-manager",
   "module": "dist/media-manager.esm.js",
   "devDependencies": {
     "@types/content-type": "^1.1.5",
