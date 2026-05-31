@@ -44,6 +44,19 @@ describe('getImageSearchHashes', () => {
           `);
   });
 
+  it('generates same hashes for small files when size=0 (unknown content-length)', async () => {
+    const smallImage = path.resolve(__dirname, '../../../test/fixtures/small.jpg');
+    const infileStream = fs.createReadStream(smallImage);
+
+    await expect(getImageSearchHashes(infileStream, 0, 'image/jpeg')).resolves
+      .toMatchInlineSnapshot(`
+            Array [
+              "vDph4g",
+              "__-AD6SDgAebG8cbwifBB-Dj0yPjo8ETgAOAA4P_8_8",
+            ]
+          `);
+  });
+
   it('generates hashes for large files', async () => {
     const bigImage = path.resolve(__dirname, '../../../test/fixtures/big.jpg');
     const infileStream = fs.createReadStream(bigImage);

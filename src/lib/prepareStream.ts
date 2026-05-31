@@ -33,8 +33,8 @@ async function prepareStream({ url }: PrepareStreamOptions): Promise<PrepareStre
 
   if (!contentTypeBeforeSlash) throw new Error(`No content type header provided by ${url}`);
 
+  // size = 0 when content-length header is absent; callers treat it as unknown and skip size-based optimizations.
   const size = +(resp.headers.get('content-length') ?? 0);
-  if (size === 0) throw new Error(`No content-length provided by ${url}, or content-length is 0`);
 
   let type: MediaType;
   switch (contentTypeBeforeSlash) {
