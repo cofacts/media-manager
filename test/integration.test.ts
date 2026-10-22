@@ -166,9 +166,7 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
           {
             name: 'webp100w', // resize to width=100 and convert to webp
             contentType: 'image/webp',
-            transform: sharp()
-              .resize(100)
-              .webp(),
+            transform: sharp().resize(100).webp(),
           },
         ];
       },
@@ -220,4 +218,6 @@ if (process.env.CREDENTIALS_JSON && process.env.BUCKET_NAME) {
     const queryResultById = await mediaManager.query({ id: queryResult.queryInfo.id });
     expect(JSON.stringify(queryResultById)).toEqual(JSON.stringify(queryResult));
   }, 30000);
+} else {
+  it.skip('integration tests require CREDENTIALS_JSON and BUCKET_NAME', () => {});
 }
