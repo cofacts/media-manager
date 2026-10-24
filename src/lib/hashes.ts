@@ -1,7 +1,10 @@
 import { createHash } from 'crypto';
 import sharp from 'sharp';
-import { imageHash } from 'image-hash';
+import jpeg from 'jpeg-js';
+import { PNG } from 'pngjs';
+import webp from '@cwasm/webp';
 import contentType from 'content-type';
+import { bmvbhash, ImageData } from './blockHash';
 
 /**
  * Consumes stream and calculate Non-image File ID hash.
@@ -26,7 +29,7 @@ export function getFileIDHash(fullBodyStream: NodeJS.ReadableStream): Promise<st
 const IMAGE_RESIZE_THRESHOLD = 1024 * 1024; // 1MB
 const RESIZED_IMAGE_DIMENSION = 1024; // Max image size = square(RESIZED_IMAGE_DIMENSION)
 
-// The content types supported by image-hash
+// The content types supported by decodeImage()
 const SUPPORTED_CONTENT_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 // A callback for attaching sharp chained methods
@@ -58,7 +61,7 @@ export async function getImageSearchHashes(
     );
   }
 
-  // Convert to webp if original image format is not supported by image-hash
+  // Convert to webp if original image format is not supported by decodeImage()
   if (!SUPPORTED_CONTENT_TYPES.includes(ext)) {
     ext = 'image/webp';
     sharpProcessors.push(sharp => sharp.webp({ lossless: true }));
@@ -78,21 +81,33 @@ export async function getImageSearchHashes(
     stream.on('error', reject);
   });
 
-  return Promise.all([imageHashAsync(imageBuffer, ext, 6), imageHashAsync(imageBuffer, ext, 16)]);
+  let imageData: ImageData;
+  try {
+    imageData = decodeImage(imageBuffer, ext);
+  } catch (error) /* istanbul ignore next */ {
+    if (error instanceof Error) error.message = `[getImageSearchHashes][decode] ${error.message}`;
+    throw error;
+  }
+
+  return [6, 16].map(bits => Buffer.from(bmvbhash(imageData, bits), 'hex').toString('base64url'));
 }
 
-function imageHashAsync(buffer: Buffer, ext: string, bits: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    imageHash({ data: buffer, ext }, bits, true, (error: Error | null, data: string): void => {
-      /* istanbul ignore if */
-      if (error) {
-        error.message = `[getImageSearchHashes][imageHash] ${error.message}`;
-        reject(error);
-      } else {
-        resolve(Buffer.from(data, 'hex').toString('base64url'));
-      }
-    });
-  });
+/**
+ * Decodes image into RGBA pixels, using the same decoders as image-hash so that hashes stay the same.
+ */
+function decodeImage(buffer: Buffer, ext: string): ImageData {
+  switch (ext) {
+    case 'image/png':
+      return PNG.sync.read(buffer);
+    case 'image/jpeg':
+    case 'image/jpg':
+      return jpeg.decode(buffer);
+    case 'image/webp':
+      return webp.decode(new Uint8Array(buffer));
+    /* istanbul ignore next */
+    default:
+      throw new Error(`Unrecognized mime type: ${ext}`);
+  }
 }
 
 /**
