@@ -1,5 +1,10 @@
 name: CI
-on: [push]
+on:
+  push:
+    branches: [main]
+  # Run on pull requests too, so a PR shows lint/test/build status before merge.
+  # Fork PRs get no secrets; the GCS integration suite skips itself then.
+  pull_request:
 jobs:
   build:
     name: Build, lint, and test on Node ${{ matrix.node }} and ${{ matrix.os }}
